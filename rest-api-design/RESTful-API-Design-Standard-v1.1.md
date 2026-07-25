@@ -282,7 +282,7 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 
 ### 7.9 Carry common metadata in a top-level metadata attribute on every resource.
 
-[REQUIRED] Every textual resource representation shall carry a top-level metadata JSON object (§16.1) holding, at minimum: createdAt and lastUpdatedAt timestamps (ISO 8601, §16.3), resourceType (the resource's type name, e.g. order, cart), and resourceVersion (the resource model version, §6.1). For an org-scoped resource it shall additionally carry organizationId (the owning organization) and createdBy (the identifier of the user who created it) — read-only provenance the server assigns and immutably maintains (§13.7); consumers treat both as informational and never send them on write. *Rationale:* Uniform metadata in one predictable place lets consumers and tooling handle provenance, freshness, and versioning identically across every resource; carrying the owning organization and creator here — rather than as domain attributes — states ownership without inviting clients to build logic on tenancy, and gives cross-organization viewers (a guest or collaborator, for whom the owning organization is not their own) the context to display it. *Example:*
+[REQUIRED] Every textual resource representation shall carry a top-level metadata JSON object (§16.1) holding, at minimum: createdAt and lastUpdatedAt timestamps (ISO 8601, §16.3), resourceType (the resource's type name, e.g. order, cart), and resourceVersion (the resource model version, §6.1). For an org-scoped resource it shall additionally carry organizationId (the owning organization) and createdById (the identifier of the user who created it) — read-only provenance the server assigns and immutably maintains (§13.7); consumers treat both as informational and never send them on write. *Rationale:* Uniform metadata in one predictable place lets consumers and tooling handle provenance, freshness, and versioning identically across every resource; carrying the owning organization and creator here — rather than as domain attributes — states ownership without inviting clients to build logic on tenancy, and gives cross-organization viewers (a guest or collaborator, for whom the owning organization is not their own) the context to display it. *Example:*
 
 ```json
 "metadata": {
@@ -291,7 +291,7 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
   "resourceType": "order",
   "resourceVersion": "1.4",
   "organizationId": "b3f1c2a0-4e5d-4a1b-9c8e-7d6f5a4b3c2d",
-  "createdBy": "9d2c7e10-1a2b-3c4d-5e6f-7a8b9c0d1e2f"
+  "createdById": "9d2c7e10-1a2b-3c4d-5e6f-7a8b9c0d1e2f"
 }
 ```
 
@@ -492,7 +492,7 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 
 ### 11.1 Name parameters in camelCase.
 
-[REQUIRED] Parameter names use camelCase — first word lowercase, subsequent words capitalized, characters [a-zA-Z] only, no spaces. *Rationale:* A single casing convention removes a whole class of "was it snake or camel?" integration errors. *Example:* `pageSize`, `lastModifiedDate`
+[REQUIRED] Parameter names use camelCase — first word lowercase, subsequent words capitalized, characters [a-zA-Z] only, no spaces. A parameter may address a nested attribute one level deep as a dotted path — two camelCase segments joined by a single `.` — so an attribute carried inside a structured object, notably the metadata block (§7.9), is addressable for filtering, sorting, and individual pass-in; nesting deeper than one level is not permitted. *Rationale:* A single casing convention removes a whole class of "was it snake or camel?" integration errors; permitting exactly one level of dotted nesting lets consumers query standard nested attributes such as `metadata.organizationId` without flattening the model, while the one-level cap keeps parameters parseable and index-friendly. *Example:* `pageSize`, `lastModifiedDate`, `metadata.organizationId`
 
 ### 11.2 Reserve the standard query-parameter names for their defined purposes.
 
@@ -767,6 +767,7 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 | `?q=status in ('OPEN','PENDING')` | Membership in a bounded list |
 | `?q=location eq 'Petaluma' and (age lt 30 or status eq 'OPEN')` | Cross-field OR with grouping |
 | `?q=startswith(lastName, 'Fon') and closedDate eq null` | Prefix match and null check |
+| `?q=metadata.organizationId eq 'b3f1c2a0-4e5d-4a1b-9c8e-7d6f5a4b3c2d'` | One-level dotted field on the metadata block (§11.1) |
 
 ### 15.6 Order results through the sort parameter.
 
