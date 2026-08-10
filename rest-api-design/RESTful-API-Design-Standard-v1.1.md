@@ -106,9 +106,9 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 
 [REQUIRED] The provider shall supply a migration plan for every major version upgrade, published to the developer portal where subscription occurs. *Rationale:* A migration plan converts a breaking change from a surprise into a managed transition.
 
-### 2.10 Rate-limit every API at the platform level.
+### 2.10 Rate-limit every API.
 
-[REQUIRED] All APIs shall be rate limited, with enforcement performed by the platform according to the consumer subscription terms — never by the provider implementation. *Rationale:* Enforced limits protect shared capacity, and centralizing enforcement in the platform keeps policy uniform and out of every provider's code.
+[REQUIRED] All APIs shall be rate limited. Where the limit is enforced — edge, gateway, or provider — and how limits are derived are deliberately left to the implementing platform. *Rationale:* An API with no limit lets a single consumer exhaust capacity every other consumer depends on, which is the part worth mandating organization-wide; fixing the mechanism as well would presume subscription tiers and traffic shapes that differ per platform and are often not yet known when the API is designed.
 
 ### 2.11 Give every service a globally unique name and short code.
 
