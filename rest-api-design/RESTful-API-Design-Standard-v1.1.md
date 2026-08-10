@@ -5,7 +5,7 @@
 | **Version** | 1.1 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-07-20 |
+| **Last Updated** | 2026-08-09 |
 
 ## Purpose
 
@@ -109,6 +109,14 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 ### 2.10 Rate-limit every API at the platform level.
 
 [REQUIRED] All APIs shall be rate limited, with enforcement performed by the platform according to the consumer subscription terms — never by the provider implementation. *Rationale:* Enforced limits protect shared capacity, and centralizing enforcement in the platform keeps policy uniform and out of every provider's code.
+
+### 2.11 Give every service a globally unique name and short code.
+
+[REQUIRED] Every service shall have a globally unique business name and a globally unique **short code** of no more than six lowercase alphanumeric characters, both recorded in the service registry (§2.3) before any artifact is created for the service; the top-level resource names a service owns (§7.1) shall likewise be unique across all services. *Rationale:* One governed short code lets a single identity name every artifact a service needs — deployment namespace, runtime identity, database and credentials, image repository, event topics — instead of an abbreviation improvised per artifact later; and because version-first URLs (§8.3) carry no service segment, globally unique resource names are what allow a request to be routed to exactly one service. *Example:* service `E-Commerce`, short code `ecom`, owning `/orders` and `/line-items`
+
+### 2.12 Derive the deployment namespace from the short code and major version.
+
+[REQUIRED] A service's deployment namespace shall be `<short code>-v<major version>`, and each new major version shall be deployed into its own namespace alongside the version it supersedes, for as long as both are supported. *Rationale:* Binding the namespace to the major version makes an upgrade a parallel deployment with a real cutover and rollback, rather than an in-place replacement; it also separates every version-scoped artifact — identity, database credentials, configuration — by construction instead of by discipline. Note the short code is an infrastructure identifier and never appears in a URL (§8.3). *Example:* `ecom-v1` and `ecom-v2` running side by side
 
 ## 3. Domain-Driven Design
 
