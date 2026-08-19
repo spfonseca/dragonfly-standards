@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | **Version** | 1.0 |
-| **Status** | Draft |
+| **Status** | Published |
 | **Author** | Steven Fonseca |
 | **Last Updated** | 2026-08-18 |
 
