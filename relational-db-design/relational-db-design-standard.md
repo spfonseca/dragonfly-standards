@@ -262,11 +262,17 @@ unguarded copy of the database, PII included.
 
 ### 11.1 Give each service its own runtime and migration users.
 
-[REQUIRED] Each service owns two database users, shared with no other service:
-`<service name>_app` for runtime and `<service name>_migrate` for migrations, where the
-snake_case service name is unique across the shared instance — the naming scheme is what prevents
-clashes. *Rationale:* Per-service credentials keep one leak's blast radius to one service, and a
-separate migration identity keeps schema-altering power out of runtime hands. *Example:*
+[REQUIRED] Each service owns two database identities, shared with no other service: one for
+runtime and one for migrations. **Where the platform offers IAM database authentication, the
+runtime identity shall be the service's own workload identity rather than a named password user** —
+the service authenticates with a short-lived token it obtains itself, so no runtime database
+password is created, stored, or rotated. Password users remain the form on a platform without IAM
+database authentication, named `<service name>_app` and `<service name>_migrate` with the
+snake_case service name unique across the shared instance. Either way the two identities stay
+distinct. *Rationale:* Per-service identities keep one leak's blast radius to one service, and a
+separate migration identity keeps schema-altering power out of runtime hands; binding the runtime
+identity to the workload removes the credential entirely, which is strictly better than protecting
+one — there is nothing to leak, and nothing to forget to rotate. *Example:*
 `order_management_app`, `order_management_migrate`
 
 ### 11.2 Grant the runtime user DML only.
@@ -286,9 +292,13 @@ per-database ownership and extensions, and clean per-service restore.
 
 ### 11.4 Take credentials from the platform secret manager, and connect over TLS.
 
-[REQUIRED] Database credentials come only from the platform secret manager — never environment
-files or repositories — and every connection to the database uses TLS. *Rationale:* Secrets live
-where rotation and audit exist, and transport encryption is the baseline everything else assumes.
+[REQUIRED] Where a database credential exists, it comes only from the platform secret manager —
+never environment files or repositories — and every connection to the database uses TLS. A runtime
+using IAM database authentication (§11.1) has no credential to store: it presents a short-lived
+token minted for its workload identity, and the connection is encrypted by the platform's own
+connector. *Rationale:* Secrets live where rotation and audit exist, and transport encryption is
+the baseline everything else assumes — but the strongest form of both is a credential that was
+never issued.
 
 ## 12. Backup and Recovery
 
