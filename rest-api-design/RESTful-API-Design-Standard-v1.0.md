@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-08-22 |
+| **Last Updated** | 2026-08-23 |
 
 ## Purpose
 
@@ -574,7 +574,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 12.9 Use 403 Forbidden for authorization and business-rule denials.
 
-[REQUIRED] 403 is returned when a properly authenticated request is not permitted — an authorization failure (§13.3) or a violated business-logic constraint. *Rationale:* Separating "who are you" from "you may not" lets clients react correctly to each.
+[REQUIRED] 403 is returned when a properly authenticated request is not permitted — an authorization failure (§13.3), or a violated business-logic constraint that no change of resource state would lift. Where the client can change state and resubmit the same request successfully, §12.12 applies instead. *Rationale:* Separating "who are you" from "you may not" lets clients react correctly to each; reserving 403 for denials the client cannot resolve keeps it from being read as "stop asking" where the answer is "settle the account and retry".
 
 ### 12.10 Use 404 Not Found when no resource exists at the location.
 
@@ -586,7 +586,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 12.12 Use 409 Conflict when the request is incompatible with resource state.
 
-[REQUIRED] 409 is returned when the request cannot be applied to the current state of the resource. *Rationale:* A state-conflict signal tells the client to re-read and reconcile rather than blindly retry.
+[REQUIRED] 409 is returned when the request cannot be applied to the current state of the resource — including state held on a resource the request depends on rather than on the target itself, such as an owning organization's standing or a parent's lifecycle state, where the identical request would succeed once that state changed. *Rationale:* A state-conflict signal tells the client to re-read and reconcile rather than blindly retry; the discriminator against 403 (§12.9) is whether a successful resubmission is possible with no change in the caller's authorization.
 
 ### 12.13 Use 412 Precondition Failed when a write's precondition is stale or missing.
 

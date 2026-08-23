@@ -5,7 +5,7 @@
 | **Version** | 1.1 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-08-18 |
+| **Last Updated** | 2026-08-23 |
 
 ## Purpose
 
@@ -368,6 +368,20 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 | `<top-level resource name>/version-history` | Version history (version, lifecycle state, end-of-life date) |
 | `<top-level resource name>/release-notes` | Release notes |
 
+### 8.10 Serve a resource instance's own metadata from a reserved sub-resource endpoint.
+
+[REQUIRED] Every resource instance shall expose its §7.9 metadata object at
+`<instance URL>/metadata`, answering GET only. *Rationale:* Provenance — when an instance was
+created, when it last changed, and which resource model version the representation follows — is the
+one part of a representation a consumer may need without the representation itself: a cache
+deciding whether to refetch, a synchroniser comparing timestamps, or a client checking a model
+version before parsing. Requiring it uniformly means none of those has to read a whole resource, or
+guess whether this particular resource happens to offer the shortcut. *Example:*
+`https://api.example.com/v1/orders/{orderId}/metadata`
+
+Distinct from §8.9, which serves metadata about the resource *type* — its documentation, versions
+and release notes — and is addressed on the collection rather than an instance.
+
 ## 9. HTTP Methods
 
 ### 9.1 Use GET for safe, idempotent reads only.
@@ -562,7 +576,7 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 
 ### 12.9 Use 403 Forbidden for authorization and business-rule denials.
 
-[REQUIRED] 403 is returned when a properly authenticated request is not permitted — an authorization failure (§13.3) or a violated business-logic constraint. *Rationale:* Separating "who are you" from "you may not" lets clients react correctly to each.
+[REQUIRED] 403 is returned when a properly authenticated request is not permitted — an authorization failure (§13.3), or a violated business-logic constraint that no change of resource state would lift. Where the client can change state and resubmit the same request successfully, §12.12 applies instead. *Rationale:* Separating "who are you" from "you may not" lets clients react correctly to each; reserving 403 for denials the client cannot resolve keeps it from being read as "stop asking" where the answer is "settle the account and retry".
 
 ### 12.10 Use 404 Not Found when no resource exists at the location.
 
@@ -574,7 +588,7 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 
 ### 12.12 Use 409 Conflict when the request is incompatible with resource state.
 
-[REQUIRED] 409 is returned when the request cannot be applied to the current state of the resource. *Rationale:* A state-conflict signal tells the client to re-read and reconcile rather than blindly retry.
+[REQUIRED] 409 is returned when the request cannot be applied to the current state of the resource — including state held on a resource the request depends on rather than on the target itself, such as an owning organization's standing or a parent's lifecycle state, where the identical request would succeed once that state changed. *Rationale:* A state-conflict signal tells the client to re-read and reconcile rather than blindly retry; the discriminator against 403 (§12.9) is whether a successful resubmission is possible with no change in the caller's authorization.
 
 ### 12.13 Use 412 Precondition Failed when a write's precondition is stale or missing.
 
