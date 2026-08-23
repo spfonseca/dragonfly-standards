@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-08-18 |
+| **Last Updated** | 2026-08-22 |
 
 ## Purpose
 
@@ -365,6 +365,20 @@ This standard applies to all RESTful APIs intended for broad enterprise reuse. B
 | `<top-level resource name>/interface-doc` | Interface documentation |
 | `<top-level resource name>/version-history` | Version history (version, lifecycle state, end-of-life date) |
 | `<top-level resource name>/release-notes` | Release notes |
+
+### 8.10 Serve a resource instance's own metadata from a reserved sub-resource endpoint.
+
+[REQUIRED] Every resource instance shall expose its §7.9 metadata object at
+`<instance URL>/metadata`, answering GET only. *Rationale:* Provenance — when an instance was
+created, when it last changed, and which resource model version the representation follows — is the
+one part of a representation a consumer may need without the representation itself: a cache
+deciding whether to refetch, a synchroniser comparing timestamps, or a client checking a model
+version before parsing. Requiring it uniformly means none of those has to read a whole resource, or
+guess whether this particular resource happens to offer the shortcut. *Example:*
+`https://api.example.com/v1/orders/{orderId}/metadata`
+
+Distinct from §8.9, which serves metadata about the resource *type* — its documentation, versions
+and release notes — and is addressed on the collection rather than an instance.
 
 ## 9. HTTP Methods
 
