@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-08-23 |
+| **Last Updated** | 2026-09-08 |
 
 ## Purpose
 
@@ -38,7 +38,8 @@ API.
 ## Scope
 
 This standard applies to all RESTful APIs intended for broad enterprise reuse. Backend-for-Frontend
-(BFF) APIs are recommended, but not required, to conform to this standard.
+(BFF) APIs are recommended, but not required, to conform to this standard — with one exception they
+shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ---
 
@@ -379,6 +380,10 @@ guess whether this particular resource happens to offer the shortcut. *Example:*
 
 Distinct from §8.9, which serves metadata about the resource *type* — its documentation, versions
 and release notes — and is addressed on the collection rather than an instance.
+
+### 8.11 Segregate Backend-for-Frontend endpoints behind a reserved `bff` path segment.
+
+[REQUIRED] A Backend-for-Frontend endpoint shall be addressed as `<endpoint base>/v<number>/bff/<path>`, and no enterprise resource shall use `bff` as its top-level name. *Rationale:* §4.5 requires business APIs and BFF APIs to be separated, and a reserved segment makes that separation observable in the URL itself rather than only in repository layout — a consumer, a gateway rule, or a reviewer can tell from the path alone whether an endpoint is built for enterprise reuse or shaped to one product's screen and free to change with it. This is a deliberate exception to §7.1 and §8.4: the segment is a tier, not a business noun, and it is exactly its non-resource character that carries the meaning. Paths below the segment are governed rather than mechanised, since a BFF is owned by the one experience it serves. *Example:* `https://api.example.com/v1/bff/account-preferences`
 
 ## 9. HTTP Methods
 
