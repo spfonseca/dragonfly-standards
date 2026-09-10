@@ -535,7 +535,8 @@ and release notes — and is addressed on the collection rather than an instance
 | `pageSize` | Maximum number of results per page |
 | `q` | OData query expression for complex searches |
 | `sort` | Result-set ordering criteria |
-| `expand` | Related resources to embed in the representation (§18) |
+| `expand` | Related resources to embed in the representation (§18.1) |
+| `omit` | Attributes to leave out of the representation (§18.3) |
 
 ### 11.3 Never use matrix parameters.
 
@@ -872,7 +873,7 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 [REQUIRED] Only responses to GET and HEAD are cacheable. Function API responses (§4.14) are served via POST and are therefore not cacheable, notwithstanding their side-effect-free semantics; this is an accepted trade-off of the POST-only rule. *Rationale:* Confining caching to safe methods keeps cache correctness independent of application semantics.
 
 
-## 18. Resource Expansion
+## 18. Resource Expansion and Omission
 
 ### 18.1 Optionally expand referenced top-level resources, one level deep, on GET only.
 
@@ -881,6 +882,14 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 ### 18.2 Keep expanded representations identical to their canonical form.
 
 [REQUIRED] (where expansion is offered) An expanded resource shall be represented exactly as a direct GET of that resource's own URL (§8.6) would return it, at the same version. *Rationale:* One schema per resource, however it arrives, keeps client parsing single-pathed.
+
+### 18.3 Optionally omit attributes named by the omit parameter.
+
+[OPTIONAL] An API may support attribute omission on GET operations, for instance and collection responses alike, through the omit query parameter (§11.2). Each value names one attribute to leave out, in dot notation relative to a single resource representation, repeated once per value (§11.5); within a collection the path is applied to every element, not to the collection envelope. Omitting nothing returns the whole representation — an API shall not withhold an attribute the consumer did not ask it to. An attribute the operation's response schema declares required shall not be omittable, and a request naming an unknown or non-omittable attribute shall be rejected with 400. *Rationale:* Some attributes are large enough to dominate a response — a stored contract, an embedded document — and a consumer that wants the rest of the resource has no other way to decline them; making omission explicit rather than the default keeps a consumer that has never heard of the parameter from silently receiving a partial resource it cannot distinguish from an incomplete one. *Example:* `?omit=versions.specification&omit=apis.specification`
+
+### 18.4 Leave the entity tag unchanged by omission.
+
+[REQUIRED] (where omission is offered) The entity tag of a response shall identify the version of the resource, not the rendering returned, and shall therefore be unaffected by omit. *Rationale:* A consumer that trimmed a read must still be able to write the resource back; an entity tag that varied with the attributes returned would make every omitted read useless for If-Match, which is the one thing a read before a write is for.
 
 ## 19. HATEOAS Links
 
