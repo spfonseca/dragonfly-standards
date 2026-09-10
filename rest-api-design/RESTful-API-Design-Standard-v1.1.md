@@ -393,9 +393,9 @@ and release notes — and is addressed on the collection rather than an instance
 
 [REQUIRED] DELETE shall remove the resource and be idempotent (not safe); subsequent access returns Not Found. *Rationale:* Idempotent deletion lets clients retry after a lost response without special-casing.
 
-### 9.5 Offer HEAD only by exception, with a stated rationale.
+### 9.5 Document HEAD only by exception, with a stated rationale.
 
-[REQUIRED] A GET endpoint shall not offer HEAD by default. HEAD may be added only where a consumer need exists that GET does not meet — typically a large representation whose existence, size, or freshness is checked far more often than it is read, or a cache, monitor, or crawler contract that requires it — and the HEAD operation's description in the OpenAPI definition shall state that rationale. Where offered, HEAD shall return exactly the headers the GET would produce, with no body. *Rationale:* Application clients GET; the headers arrive with the body at no extra cost, so a HEAD on every GET is an operation almost nobody calls that doubles the contract, its reference documentation, its tests, and its generated clients. Reserving it for the cases that need it keeps the interface the size of its use.
+[REQUIRED] An API shall answer HEAD wherever it answers GET, returning exactly the headers the GET would produce with no body — RFC 9110 requires that of every general-purpose server, so it is not a per-endpoint decision. It shall not be *documented* as an operation by default. A HEAD operation shall appear in the OpenAPI definition only where a consumer need exists that GET does not meet — typically a large representation whose existence, size, or freshness is checked far more often than it is read, or a cache, monitor, or crawler contract that requires it — and that operation's description shall state the rationale. *Rationale:* Answering HEAD costs nothing and is obligatory; publishing it does not and is not. Application clients GET, because the headers arrive with the body anyway, so a documented HEAD beside every GET is an operation almost nobody calls that doubles the contract, its reference documentation, its tests, and its generated clients. Keeping the published surface to the operations consumers actually call is what makes the contract readable.
 
 ### 9.6 Reject any verb outside the approved set.
 
