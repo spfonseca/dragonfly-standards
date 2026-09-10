@@ -7,6 +7,9 @@
 | **Author** | Steven Fonseca |
 | **Last Updated** | 2026-08-23 |
 
+> **§7.9 and §13.7 graduated into v1.0 on 2026-09-09**, when the identity/organization service began
+> building them (plan 1.18–1.20). They are no longer here; read them in the Published version.
+
 ## Purpose
 
 This standard exists so that every REST API the organization builds behaves like part of one
@@ -288,21 +291,6 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 ### 7.8 Fold sub-resource changes into the parent resource's version.
 
 [REQUIRED] Sub-resources follow the same naming standards as top-level resources but are not independently versioned; a breaking sub-resource change increments the parent version. *Rationale:* Consumers track one version per top-level resource rather than a matrix of sub-resource versions.
-
-### 7.9 Carry common metadata in a top-level metadata attribute on every resource.
-
-[REQUIRED] Every textual resource representation shall carry a top-level metadata JSON object (§16.1) holding, at minimum: createdAt and lastUpdatedAt timestamps (ISO 8601, §16.3), resourceType (the resource's type name, e.g. order, cart), and resourceVersion (the resource model version, §6.1). For an org-scoped resource it shall additionally carry organizationId (the owning organization) and createdById (the identifier of the user who created it) — read-only provenance the server assigns and immutably maintains (§13.7); consumers treat both as informational and never send them on write. *Rationale:* Uniform metadata in one predictable place lets consumers and tooling handle provenance, freshness, and versioning identically across every resource; carrying the owning organization and creator here — rather than as domain attributes — states ownership without inviting clients to build logic on tenancy, and gives cross-organization viewers (a guest or collaborator, for whom the owning organization is not their own) the context to display it. *Example:*
-
-```json
-"metadata": {
-  "createdAt": "2026-07-15T09:30:00Z",
-  "lastUpdatedAt": "2026-07-16T14:05:00Z",
-  "resourceType": "order",
-  "resourceVersion": "1.4",
-  "organizationId": "b3f1c2a0-4e5d-4a1b-9c8e-7d6f5a4b3c2d",
-  "createdById": "9d2c7e10-1a2b-3c4d-5e6f-7a8b9c0d1e2f"
-}
-```
 
 ### 7.10 Enumerate the lifecycle states of every stateful resource.
 
@@ -695,11 +683,6 @@ and release notes — and is addressed on the collection rather than an instance
 ### 13.6 Keep secrets out of URLs, logs, and source code.
 
 [REQUIRED] Credentials, tokens, and keys shall never appear in URLs, log output, or source repositories. *Rationale:* Each of these is routinely retained and widely readable, making them the most common source of credential leaks.
-
-### 13.7 Assign tenancy and ownership from the authenticated identity, never from the client.
-
-[REQUIRED] A resource's owning organization (its tenancy) and its creator shall be assigned by the server from the authenticated caller's identity at creation, and shall be immutable thereafter. The API shall never read tenancy or ownership from client input: a create or update payload carrying either is rejected, or the fields are ignored — never honored. Reads may expose them only as read-only provenance metadata (§7.9). *Rationale:* Deriving tenancy from the token and never the payload is what prevents a caller from creating or moving a resource into another organization's scope (a tenancy-escape / IDOR class of flaw); making ownership server-assigned and immutable keeps a resource with its owning organization independently of who created it or who later edits it — the organization owns the resource through the member who created it, but that ownership does not follow the user out of the organization.
-
 
 ## 14. Asynchronous Operations
 
