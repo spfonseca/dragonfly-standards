@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-09-08 |
+| **Last Updated** | 2026-09-10 |
 
 ## Purpose
 
@@ -949,6 +949,28 @@ with the unit that ships.
 ### 21.4 Publish release notes for every version.
 
 [REQUIRED] Each version shall publish release notes, served from the release-notes metadata endpoint (§8.9). *Rationale:* Release notes are how consumers learn what changed and whether they must act.
+
+### 21.5 Mark each top-level resource schema with `x-top-level-resource`.
+
+[REQUIRED] The standalone JSON Schema of a top-level resource (§21.2) shall carry `"x-top-level-resource": true` at its root, and no other schema shall carry it. *Rationale:* The flag makes a schema's role machine-readable. Documentation tooling can present the resources first and the shapes they compose beneath them, and the generators that derive request schemas from a resource can find their inputs without relying on a file-naming convention. *Example:*
+
+```json
+{ "title": "Person", "type": "object", "x-top-level-resource": true, "properties": { "...": "..." } }
+```
+
+### 21.6 Provide titled examples in `x-examples` on every top-level resource schema.
+
+[REQUIRED] Every top-level resource schema shall carry an `x-examples` array with at least one entry. Each entry is an object with `title`, `description`, and `jsonInstance`, where `jsonInstance` is a complete representation that validates against the schema. [RECOMMENDED] Any other schema may carry `x-examples` in the same form. *Rationale:* JSON Schema's own `examples` keyword holds bare values with nowhere to say what each one shows. A titled, described instance tells the reader which situation it illustrates, and validating each instance in CI (§2.1) keeps the examples from drifting from the model. *Example:*
+
+```json
+"x-examples": [
+  {
+    "title": "Person with a work email",
+    "description": "A person whose only contact channel is a verified work address.",
+    "jsonInstance": { "personId": "9b2e…", "firstName": "Ada", "lastName": "Lovelace", "primaryEmail": { "emailAddress": "ada@example.com", "type": "WORK" } }
+  }
+]
+```
 
 ## 22. Observability
 
