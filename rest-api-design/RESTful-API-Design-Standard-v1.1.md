@@ -5,7 +5,7 @@
 | **Version** | 1.1 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-09-10 |
+| **Last Updated** | 2026-09-12 |
 
 > **§7.9 and §13.7 graduated into v1.0 on 2026-09-09**, when the identity/organization service began
 > building them (plan 1.18–1.20). They are no longer here; read them in the Published version.
@@ -152,7 +152,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 4.3 Expose only the approved uniform verb set.
 
-[REQUIRED] Only GET, POST, PATCH, DELETE, and HEAD shall be used, each honoring its required semantics (§9): GET is safe and idempotent; POST is neither safe nor idempotent; PATCH is neither safe nor guaranteed idempotent; DELETE is idempotent but not safe; HEAD is safe and idempotent. *Rationale:* A constrained, uniform interface is what makes REST resources predictable across the whole API ecosystem.
+[REQUIRED] Only GET, POST, PUT, PATCH, DELETE, and HEAD shall be used, each honoring its required semantics (§9): GET is safe and idempotent; POST is neither safe nor idempotent; PUT is idempotent but not safe, and replaces a value whole (§9.7); PATCH is neither safe nor guaranteed idempotent; DELETE is idempotent but not safe; HEAD is safe and idempotent. *Rationale:* A constrained, uniform interface is what makes REST resources predictable across the whole API ecosystem.
 
 ### 4.4 Keep every interaction stateless.
 
@@ -399,7 +399,11 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 9.6 Reject any verb outside the approved set.
 
-[REQUIRED] Verbs outside GET/POST/PATCH/DELETE/HEAD shall be rejected with 405, and the Allow header shall list supported methods. *Rationale:* Explicit rejection with Allow tells the client exactly what it may do instead.
+[REQUIRED] Verbs outside GET/POST/PUT/PATCH/DELETE/HEAD shall be rejected with 405, and the Allow header shall list supported methods. *Rationale:* Explicit rejection with Allow tells the client exactly what it may do instead.
+
+### 9.7 Use PUT to replace a value whole.
+
+[REQUIRED] PUT shall replace the entire value of the resource or sub-resource it addresses with the representation supplied — every attribute of that value, nothing partial — and shall be idempotent (not safe): repeating a PUT leaves the same state. PUT shall never create; a PUT to a nonexistent resource returns 404. Use it for values that change as a whole — a single-valued sub-resource such as a status — where PATCH's field-by-field merge would misdescribe the operation; use PATCH (§9.2) for partial updates of a resource. *Rationale:* A state change is a replacement, not a merge; naming it PUT tells the client the whole value is being set and that a retry is harmless. *Example:* `PUT /v1/rest-resources/{restResourceId}/status` with `{"status": "IN_REVIEW"}`.
 
 ## 10. HTTP Headers
 
@@ -946,6 +950,19 @@ with the unit that ships.
     "jsonInstance": { "personId": "9b2e…", "firstName": "Ada", "lastName": "Lovelace", "primaryEmail": { "emailAddress": "ada@example.com", "type": "WORK" } }
   }
 ]
+```
+
+### 21.7 Name every operation with `x-api-name`.
+
+[REQUIRED] Every operation in an OpenAPI definition — each path and verb, which is what an API is (§2.5) — shall carry an `x-api-name` extension: the API's business name, capitalized words ending in `API` (for example `Register Model Version API`), unique within the service. [RECOMMENDED] An operation may carry `x-api-type`, one of `ENTITY`, `FUNCTION`, `TASK` or `ORCHESTRATION` (§4.13–§4.16); absent, the API is an Entity API. HEAD operations and the reserved endpoints (§8.9, §8.10, §22.5) are not APIs of their own and carry neither. *Rationale:* The service registry (§2.3) records one entry per API, and its name is a business fact — what a consumer looks for — that no `operationId` or summary states reliably. Declaring it in the contract lets registration be derived from the contract on every deploy instead of maintained by hand. *Example:*
+
+```yaml
+paths:
+  /rest-resources:
+    post:
+      operationId: createRestResource
+      x-api-name: Register Model Version API
+      x-api-type: ENTITY
 ```
 
 ## 22. Observability
