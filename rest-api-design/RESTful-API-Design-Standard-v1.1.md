@@ -70,7 +70,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 1.6 Name each service and API to convey its scope, uniquely and intuitively.
 
-[REQUIRED] Service and API names shall indicate the scope of capabilities and resources offered, be intuitive to external developers, differentiate the offering from all others, and be unique; name syntax is capitalized words separated by spaces, terminated by the suffix "Service" or "API" respectively. Names should be technology-independent, and abbreviations should be minimal and well known. *Rationale:* The name is the first thing a prospective consumer evaluates; it must communicate purpose at a glance. *Example:* E-Commerce Service (service); Update Cart API (API)
+[REQUIRED] Service and API names shall indicate the scope of capabilities and resources offered, be intuitive to external developers, differentiate the offering from all others, and be unique; name syntax is capitalized words separated by single spaces — a connector word (and, of, for, the, to, in, on) stays lowercase and is never first or last — terminated by the suffix "Service" or "API" respectively; a service domain follows the same syntax without a suffix. Names should be technology-independent, and abbreviations should be minimal and well known. *Rationale:* The name is the first thing a prospective consumer evaluates; it must communicate purpose at a glance. *Example:* E-Commerce Service, Identity and Organization Service (services); Update Cart API (API); Identity and Organization (domain)
 
 ## 2. Governance
 
@@ -954,7 +954,7 @@ with the unit that ships.
 
 ### 21.7 Name every operation with `x-api-name`.
 
-[REQUIRED] Every operation in an OpenAPI definition — each path and verb, which is what an API is (§2.5) — shall carry an `x-api-name` extension: the API's business name, capitalized words ending in `API` (for example `Register Model Version API`), unique within the service. [RECOMMENDED] An operation may carry `x-api-type`, one of `ENTITY`, `FUNCTION`, `TASK` or `ORCHESTRATION` (§4.13–§4.16); absent, the API is an Entity API. HEAD operations and the reserved endpoints (§8.9, §8.10, §22.5) are not APIs of their own and carry neither. *Rationale:* The service registry (§2.3) records one entry per API, and its name is a business fact — what a consumer looks for — that no `operationId` or summary states reliably. Declaring it in the contract lets registration be derived from the contract on every deploy instead of maintained by hand. *Example:*
+[REQUIRED] Every operation in an OpenAPI definition — each path and verb, which is what an API is (§2.5) — shall carry an `x-api-name` extension: the API's business name in the §1.6 syntax, ending in `API` (for example `Register Model Version API`), unique within the service. [RECOMMENDED] An operation may carry `x-api-type`, one of `ENTITY`, `FUNCTION`, `TASK` or `ORCHESTRATION` (§4.13–§4.16); absent, the API is an Entity API. HEAD operations and the reserved endpoints (§8.9, §8.10, §22.5) are not APIs of their own and carry neither. *Rationale:* The service registry (§2.3) records one entry per API, and its name is a business fact — what a consumer looks for — that no `operationId` or summary states reliably. Declaring it in the contract lets registration be derived from the contract on every deploy instead of maintained by hand. *Example:*
 
 ```yaml
 paths:
