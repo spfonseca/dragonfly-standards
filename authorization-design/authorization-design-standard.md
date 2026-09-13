@@ -39,8 +39,10 @@ product's implementation guidance.
 - [REQUIRED] A scope is a property of the **client**: whether this application may touch a class of
   resource at all. A fact is a property of the **subject**: whether this person or machine may do
   this to this object. Neither substitutes for the other.
-- [REQUIRED] Every request passes the scope gate first, then the fact check. A missing scope is a
-  provisioning error and answers 403; a missing fact is an access decision and answers per §6.
+- [REQUIRED] Every request passes the scope gate first, then the fact check — reads included: a
+  collection read is scope, then one check that the caller may see the class in this organization
+  (§5, §9), then the query. A missing scope is a provisioning error and answers 403; a missing fact
+  is an access decision and answers per §6.
 - Which questions belong to which layer, with the test: if the answer depends on *which* object,
   it is a fact.
 
@@ -87,6 +89,11 @@ product's implementation guidance.
 
 - [REQUIRED] Without a membership, role or direct relation, a subject learns nothing about an object,
   its existence included.
+- [REQUIRED] **Closed by default within an organization.** Membership grants no visibility of the
+  organization's data. A member sees a class of data only through a role that carries that
+  visibility, assigned deliberately; a new member sees nothing until one is. A service therefore
+  never answers a read from the token's organization alone — the organization scopes the query,
+  a fact decides whether the caller may see the class (§6).
 - [REQUIRED] Cross-organization access is never membership in the other organization. It is a direct
   relation on the specific object, or a platform-level grant (§7).
 - Publication: when registering a thing is deciding to show it to everyone admitted, and how that is
@@ -127,6 +134,20 @@ product's implementation guidance.
   helpers) lives with the product that owns the model, derived from it so the two cannot drift.
 - Policy — which relation an endpoint checks — is stated in the service's authorization
   requirements and nowhere else.
+
+## 9. Roles
+
+> Visibility and capability reach a member through roles; the platform ships some, organizations define more.
+
+- [REQUIRED] Capabilities and visibility are granted by roles assigned to users or groups, never
+  by membership itself. Which relations a role carries is stated in the model; which roles exist
+  is a product decision.
+- [REQUIRED] The platform ships **application roles** — the ones an organization administrator
+  finds useful on day one (a viewer and a manager per product area, for instance) — and
+  organizations may define **custom roles** composed from the same relations.
+- What a new member holds before any role is assigned (nothing, or a product-defined base role),
+  and who may assign roles (organization administrators, through organization administration).
+- Roles for machine accounts: the same roles, assigned to the service-account user.
 
 ## Open questions
 
