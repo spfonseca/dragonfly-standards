@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-09-12 |
+| **Last Updated** | 2026-09-15 |
 
 ## Purpose
 
@@ -291,7 +291,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 7.9 Carry common metadata in a top-level metadata attribute on every resource.
 
-[REQUIRED] Every textual resource representation shall carry a top-level metadata JSON object (§16.1) holding, at minimum: createdAt and lastUpdatedAt timestamps (ISO 8601, §16.3), resourceType (the resource's type name, e.g. order, cart), and resourceVersion (the resource model version, §6.1). For an org-scoped resource it shall additionally carry organizationId (the owning organization) and createdById (the identifier of the user who created it) — read-only provenance the server assigns and immutably maintains (§13.7); consumers treat both as informational and never send them on write. *Rationale:* Uniform metadata in one predictable place lets consumers and tooling handle provenance, freshness, and versioning identically across every resource; carrying the owning organization and creator here — rather than as domain attributes — states ownership without inviting clients to build logic on tenancy, and gives cross-organization viewers (a guest or collaborator, for whom the owning organization is not their own) the context to display it. *Example:*
+[REQUIRED] Every textual resource representation shall carry a top-level metadata JSON object (§16.1) holding, at minimum: createdAt and lastUpdatedAt timestamps (ISO 8601, §16.3), resourceType (the resource's type name, e.g. order, cart), and resourceVersion (the resource model version, §6.1). For an org-scoped resource it shall additionally carry organizationId (the owning organization), createdById (the identifier of the user who created it) and updatedById (the identifier of the user who last changed it) — read-only provenance the server assigns from the authenticated caller and never reads from client input (§13.7); consumers treat all three as informational and never send them on write. organizationId and createdById are set once and are immutable; updatedById is rewritten on every change. updatedById names the most recent writer and nothing more — it is not a change history, which stays a per-resource decision rather than a platform guarantee — and neither identity attribute is ever a basis for an authorization decision (§13.3). *Rationale:* Uniform metadata in one predictable place lets consumers and tooling handle provenance, freshness, and versioning identically across every resource; carrying the owning organization and creator here — rather than as domain attributes — states ownership without inviting clients to build logic on tenancy, and gives cross-organization viewers (a guest or collaborator, for whom the owning organization is not their own) the context to display it. Pairing lastUpdatedAt with the identity behind it answers "who last touched this", the question every governance, support and audit conversation reaches, from the same predictable place — and the identity is already recorded on every row for that purpose, so publishing it costs nothing and withholding it only forces each consumer to ask the owning team. Both identity attributes travel with the representation, so an API whose editors must not be disclosed to a reader it serves records that as an architecture exception rather than varying the block. *Example:*
 
 ```json
 "metadata": {
@@ -300,7 +300,8 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
   "resourceType": "order",
   "resourceVersion": "1.4",
   "organizationId": "b3f1c2a0-4e5d-4a1b-9c8e-7d6f5a4b3c2d",
-  "createdById": "9d2c7e10-1a2b-3c4d-5e6f-7a8b9c0d1e2f"
+  "createdById": "9d2c7e10-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+  "updatedById": "4e8a1b90-2c3d-4e5f-6a7b-8c9d0e1f2a3b"
 }
 ```
 
@@ -527,7 +528,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 11.1 Name parameters in camelCase.
 
-[REQUIRED] Parameter names use camelCase — first word lowercase, subsequent words capitalized, characters [a-zA-Z] only, no spaces. *Rationale:* A single casing convention removes a whole class of "was it snake or camel?" integration errors. *Example:* `pageSize`, `lastModifiedDate`
+[REQUIRED] Parameter names use camelCase — first word lowercase, subsequent words capitalized, characters [a-zA-Z] only, no spaces. A parameter may address a nested attribute one level deep as a dotted path — two camelCase segments joined by a single `.` — so an attribute carried inside a structured object, notably the metadata block (§7.9), is addressable for filtering, sorting, and individual pass-in; nesting deeper than one level is not permitted. *Rationale:* A single casing convention removes a whole class of "was it snake or camel?" integration errors; permitting exactly one level of dotted nesting lets consumers query standard nested attributes such as `metadata.organizationId` without flattening the model, while the one-level cap keeps parameters parseable and index-friendly. *Example:* `pageSize`, `lastModifiedDate`, `metadata.organizationId`
 
 ### 11.2 Reserve the standard query-parameter names for their defined purposes.
 
@@ -708,7 +709,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 13.7 Assign tenancy and ownership from the authenticated identity, never from the client.
 
-[REQUIRED] A resource's owning organization (its tenancy) and its creator shall be assigned by the server from the authenticated caller's identity at creation, and shall be immutable thereafter. The API shall never read tenancy or ownership from client input: a create or update payload carrying either is rejected, or the fields are ignored — never honored. Reads may expose them only as read-only provenance metadata (§7.9). *Rationale:* Deriving tenancy from the token and never the payload is what prevents a caller from creating or moving a resource into another organization's scope (a tenancy-escape / IDOR class of flaw); making ownership server-assigned and immutable keeps a resource with its owning organization independently of who created it or who later edits it — the organization owns the resource through the member who created it, but that ownership does not follow the user out of the organization.
+[REQUIRED] A resource's owning organization (its tenancy) and its creator shall be assigned by the server from the authenticated caller's identity at creation, and shall be immutable thereafter. The identity of the most recent writer is likewise taken from the authenticated caller and never from client input, but is rewritten on every change rather than being immutable (§7.9). The API shall never read tenancy, ownership or either identity from client input: a create or update payload carrying any of them is rejected, or the fields are ignored — never honored. Reads may expose them only as read-only provenance metadata (§7.9). *Rationale:* Deriving tenancy from the token and never the payload is what prevents a caller from creating or moving a resource into another organization's scope (a tenancy-escape / IDOR class of flaw); making ownership server-assigned and immutable keeps a resource with its owning organization independently of who created it or who later edits it — the organization owns the resource through the member who created it, but that ownership does not follow the user out of the organization.
 
 
 ## 14. Asynchronous Operations
