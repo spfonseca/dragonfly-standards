@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-07-20 |
+| **Last Updated** | 2026-08-20 |
 
 ## Purpose
 
@@ -78,9 +78,19 @@ relationship is an integrity bug waiting for a code path that forgets it. *Examp
 ### 3.1 Give every attribute a real typed column.
 
 [REQUIRED] Every persisted attribute gets its own typed column; JSON/JSONB columns shall not be
-used — the prohibition is absolute. *Rationale:* Typed columns keep the schema fully expressible
+used for application attributes. *Rationale:* Typed columns keep the schema fully expressible
 as an ERD, constraints enforceable, and migrations meaningful diffs rather than no-ops around an
 opaque blob.
+
+[REQUIRED] One exception: a document defined by an external specification, read and written only as
+a whole, may occupy a single JSON/JSONB column — a registered JSON Schema is the case this exists
+for. It applies only where all three hold: the document's own specification defines its validity,
+decomposing it into columns would encode that specification in DDL, and no query filters, sorts or
+joins reach inside it. A payload *described* by such a document is not covered — those are
+application attributes and take typed columns. *Rationale:* Normalizing a specification-defined
+document reimplements its grammar as tables, which is more brittle than storing it whole. The
+prohibition exists to stop attributes hiding in blobs, not to forbid documents that are genuinely
+opaque to the database.
 
 ### 3.2 Store timestamps as timestamptz in UTC.
 
