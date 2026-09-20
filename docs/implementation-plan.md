@@ -33,13 +33,11 @@
 - ◐ **Authorization Tuple Management Standard** — `authorization-tuple-management/`.
 - ◐ **Authorization Design Standard** — `authorization-design/`. Skeleton; roles and
   closed-by-default agreed, the rest under elaboration.
+- ◐ **FMEA Rating Rubric Standard** — `fmea-rating-rubric/`. Written to the implementation: the
+  three ten-point tables the EA Guidance service serves as `/v1/fmea-analysis/rubrics`, severity
+  dominating with no RPN, re-rating after actions taken. Built against by the FMEA library and
+  worksheet. Once Published, cited from `failure-modes-effects-analysis-schema.json`.
 
 ### Planned
 
-- ☐ **FMEA Rating Rubric Standard** — `fmea-rating-rubric/fmea-rating-rubric-standard.md`. The
-  rubric a failure modes and effects analysis is rated under: the ten-point anchor tables for
-  severity, occurrence and detection, aligned to AIAG-VDA, and action priority with severity
-  dominating in place of a risk priority number, which is not to be computed or stored. Specific to
-  FMEA — each kind of analysis defines its own rubric, and this one is not shared with any other.
-  Once Published, cited from `failure-modes-effects-analysis-schema.json` (`severity`) in place of
-  the convention that description currently assumes.
+- none
