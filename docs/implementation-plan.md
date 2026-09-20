@@ -36,14 +36,10 @@
 
 ### Planned
 
-- ☐ **Rating Scales Standard** — `rating-scales/rating-scales-standard.md`. The general-purpose
-  rubric for the assessment resources, so that ratings are comparable across analyses without
-  each analysis carrying its own scale. Covers:
-  - Failure modes and effects analysis: the ten-point anchor tables for severity, occurrence and
-    detection, aligned to AIAG-VDA; and action priority with severity dominating, in place of a
-    risk priority number, which is not to be computed or stored.
-  - Risk register: the five-level anchors for likelihood and impact, and the rule that the two are
-    read together and never multiplied into a stored severity.
-  - Once Published, cited from `failure-modes-effects-analysis-schema.json` (`severity`) and
-    `risk-schema.json` (`likelihood`, `impact`) in place of the convention those descriptions
-    currently assume.
+- ☐ **FMEA Rating Rubric Standard** — `fmea-rating-rubric/fmea-rating-rubric-standard.md`. The
+  rubric a failure modes and effects analysis is rated under: the ten-point anchor tables for
+  severity, occurrence and detection, aligned to AIAG-VDA, and action priority with severity
+  dominating in place of a risk priority number, which is not to be computed or stored. Specific to
+  FMEA — each kind of analysis defines its own rubric, and this one is not shared with any other.
+  Once Published, cited from `failure-modes-effects-analysis-schema.json` (`severity`) in place of
+  the convention that description currently assumes.
