@@ -5,7 +5,7 @@
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-09-15 |
+| **Last Updated** | 2026-09-24 |
 
 ## Purpose
 
@@ -189,7 +189,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 4.13 Use Entity APIs to manipulate resource state.
 
-[REQUIRED] An Entity API manipulates the state of a resource (CRUD); its state effects are on the resource itself, it uses the full verb set (GET, POST, PATCH, DELETE, HEAD), and its URL is the plural resource noun. *Rationale:* Anchoring state manipulation to the resource keeps CRUD uniform and predictable across every business object. *Example:* `/orders/{id}`
+[REQUIRED] An Entity API manipulates the state of a resource (CRUD); its state effects are on the resource itself, it uses the verbs GET, POST, PATCH and DELETE where each applies (and HEAD only by exception, §9.5), and its URL is the plural resource noun. *Rationale:* Anchoring state manipulation to the resource keeps CRUD uniform and predictable across every business object. *Example:* `/orders/{id}`
 
 ### 4.14 Use Function APIs to compute values.
 
@@ -410,9 +410,9 @@ and release notes — and is addressed on the collection rather than an instance
 
 [REQUIRED] DELETE shall remove the resource and be idempotent (not safe); subsequent access returns Not Found. *Rationale:* Idempotent deletion lets clients retry after a lost response without special-casing.
 
-### 9.5 Use HEAD to return a GET's headers with an empty body.
+### 9.5 Document HEAD only by exception, with a stated rationale.
 
-[REQUIRED] HEAD shall return exactly the headers a GET would produce, with no body. *Rationale:* HEAD lets clients check existence, size, or freshness without transferring the representation.
+[REQUIRED] An API shall answer HEAD wherever it answers GET, returning exactly the headers the GET would produce with no body — RFC 9110 requires that of every general-purpose server, so it is not a per-endpoint decision. It shall not be *documented* as an operation by default. A HEAD operation shall appear in the OpenAPI definition only where a consumer need exists that GET does not meet — typically a large representation whose existence, size, or freshness is checked far more often than it is read, or a cache, monitor, or crawler contract that requires it — and that operation's description shall state the rationale. *Rationale:* Answering HEAD costs nothing and is obligatory; publishing it does not and is not. Application clients GET, because the headers arrive with the body anyway, so a documented HEAD beside every GET is an operation almost nobody calls that doubles the contract, its reference documentation, its tests, and its generated clients. Keeping the published surface to the operations consumers actually call is what makes the contract readable.
 
 ### 9.6 Reject any verb outside the approved set.
 
