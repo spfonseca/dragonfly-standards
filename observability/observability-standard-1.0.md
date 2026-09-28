@@ -139,8 +139,7 @@ does not advance `backoffLimit`, stays active, and with
 so there is no failed run to alert on, and an alert watching for errors
 sees none. Found live: a platform reconciler did not run for five hours
 and the symptom was the absence of an event rather than the presence of
-one. The corresponding obligation on the workload is the Backend Job
-Design Standard's 19.11; this is what notices when it is not met.
+one. This is what notices when a scheduled job cannot start its next run.
 
 ### 3.3 Monitor Kubernetes failure modes separately from business failures.
 

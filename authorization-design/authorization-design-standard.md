@@ -18,7 +18,6 @@ industryReferences:
   - {title: "Zanzibar: Google's Consistent, Global Authorization System (2019)", url: "https://research.google/pubs/zanzibar-googles-consistent-global-authorization-system/"}
   - {title: "RFC 6749 — The OAuth 2.0 Authorization Framework", url: "https://www.rfc-editor.org/rfc/rfc6749"}
   - {title: "OpenFGA modeling guides", url: "https://openfga.dev/docs/modeling"}
-supportingStandards: [APIDS-v1]
 ---
 
 # Authorization Design Standard
