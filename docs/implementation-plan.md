@@ -44,7 +44,7 @@
 
 ## Tooling
 
-- ☐ **Publish standards to the platform's content bucket** — `scripts/publish-to-content.py`, run by
+- ☑ **Publish standards to the platform's content bucket** — `scripts/publish-to-content.py`, run by
   hand for now. Converts the listed standards, drafts included, into the `standards` resource shape
   and writes them to the bucket the platform's initialization reads.
 

@@ -1,7 +1,46 @@
+---
+shortName: RDBDS
+description: 'One set of conventions for the relational schemas behind the platform''s APIs: naming, keys,
+  typing, constraints and indexing, and how a service uses its database at runtime.'
+adoptionMetrics:
+- Share of service schemas passing the automated naming, typing and tenancy audit
+- Share of tables carrying the common provenance columns and an organization scope where they own tenant
+  data
+impactMetrics:
+- Cross-tenant defects raised per quarter
+- Time for an engineer to become productive on a schema they did not write
+- Database incidents attributable to connection exhaustion or unbounded queries
+tags:
+- data
+- design
+- postgres
+softwareLifecycle:
+- ARCHITECTURE_AND_DESIGN
+- IMPLEMENTATION
+- OPERATE_AND_SUPPORT
+solutionScope:
+- DATA_AND_PERSISTENCE
+- INFRASTRUCTURE
+architectureQualities:
+- MAINTAINABILITY
+- PERFORMANCE
+- RELIABILITY
+- SECURITY
+- RECOVERABILITY
+industryReferences:
+- title: PostgreSQL Documentation
+  url: https://www.postgresql.org/docs/
+- title: RFC 9562 — Universally Unique Identifiers (UUIDs)
+  url: https://www.rfc-editor.org/rfc/rfc9562
+supportingStandards:
+- APIDS-v1
+---
+
 # Relational DB Design Standard
 
 | Field | Value |
 |---|---|
+| **Short Name** | RDBDS |
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
@@ -12,6 +51,13 @@
 This standard exists so that every relational schema backing the organization's APIs is designed
 the same way — one set of conventions for naming, keys, typing, constraints, and indexing that
 keeps schemas readable, evolvable, and mechanically consistent with the API contracts above them.
+
+## Value Proposition
+
+- **Readable schemas** — one set of naming, key and typing conventions means an engineer can read a schema they did not write without first learning its author's habits.
+- **Evolvable schemas** — consistent constraints and indexing keep a schema safe to change as the service behind it grows.
+- **Alignment with the API** — schemas stay mechanically consistent with the API contracts above them, so the mapping between resource and table is predictable rather than invented per service.
+- **Decisions made once** — settled conventions remove recurring schema design decisions from every project.
 
 ## Scope
 

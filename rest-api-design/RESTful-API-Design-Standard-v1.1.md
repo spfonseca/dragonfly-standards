@@ -1,15 +1,46 @@
+---
+shortName: APIDS
+description: A single set of conventions for naming, versioning, error handling, security and lifecycle
+  management, so that every REST API the organization builds behaves like part of one coherent platform
+  rather than a collection of independently invented interfaces.
+adoptionMetrics:
+- Share of APIs in the catalog whose contract passes the automated conformance audit
+- Share of new services instantiated from a conforming pattern rather than hand-built
+impactMetrics:
+- Median time from contract sign-off to first consumer integration
+- Consumer-reported defects attributable to guessed-at semantics
+tags:
+- api
+- integration
+- design
+softwareLifecycle:
+- ARCHITECTURE_AND_DESIGN
+- IMPLEMENTATION
+solutionScope:
+- SOFTWARE_ARCHITECTURE
+- APIS_AND_INTEGRATIONS
+architectureQualities:
+- INTEROPERABILITY
+- MAINTAINABILITY
+- USABILITY
+industryReferences:
+- title: RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels
+  url: https://www.rfc-editor.org/rfc/rfc2119
+- title: RFC 9457 — Problem Details for HTTP APIs
+  url: https://www.rfc-editor.org/rfc/rfc9457
+- title: RFC 9110 — HTTP Semantics
+  url: https://www.rfc-editor.org/rfc/rfc9110
+---
+
 # RESTful API Design Standard for Enterprise Reuse
 
 | Field | Value |
 |---|---|
+| **Short Name** | APIDS |
 | **Version** | 1.1 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
 | **Last Updated** | 2026-09-12 |
-
-> **§7.9 and §13.7 graduated into v1.0 on 2026-09-09**, when the identity/organization service began
-> building them (plan 1.18–1.20). **§9.5 graduated on 2026-09-24**, when the first contract was
-> authored against it. They are no longer here; read them in the Published version.
 
 ## Purpose
 
@@ -293,6 +324,22 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 [REQUIRED] Sub-resources follow the same naming standards as top-level resources but are not independently versioned; a breaking sub-resource change increments the parent version. *Rationale:* Consumers track one version per top-level resource rather than a matrix of sub-resource versions.
 
+### 7.9 Carry common metadata in a top-level metadata attribute on every resource.
+
+[REQUIRED] Every textual resource representation shall carry a top-level metadata JSON object (§16.1) holding, at minimum: createdAt and lastUpdatedAt timestamps (ISO 8601, §16.3), resourceType (the resource's type name, e.g. order, cart), and resourceVersion (the resource model version, §6.1). For an org-scoped resource it shall additionally carry organizationId (the owning organization), createdById (the identifier of the user who created it) and updatedById (the identifier of the user who last changed it) — read-only provenance the server assigns from the authenticated caller and never reads from client input (§13.7); consumers treat all three as informational and never send them on write. organizationId and createdById are set once and are immutable; updatedById is rewritten on every change. updatedById names the most recent writer and nothing more — it is not a change history, which stays a per-resource decision rather than a platform guarantee — and neither identity attribute is ever a basis for an authorization decision (§13.3). *Rationale:* Uniform metadata in one predictable place lets consumers and tooling handle provenance, freshness, and versioning identically across every resource; carrying the owning organization and creator here — rather than as domain attributes — states ownership without inviting clients to build logic on tenancy, and gives cross-organization viewers (a guest or collaborator, for whom the owning organization is not their own) the context to display it. Pairing lastUpdatedAt with the identity behind it answers "who last touched this", the question every governance, support and audit conversation reaches, from the same predictable place — and the identity is already recorded on every row for that purpose, so publishing it costs nothing and withholding it only forces each consumer to ask the owning team. Both identity attributes travel with the representation, so an API whose editors must not be disclosed to a reader it serves records that as an architecture exception rather than varying the block. *Example:*
+
+```json
+"metadata": {
+  "createdAt": "2026-07-15T09:30:00Z",
+  "lastUpdatedAt": "2026-07-16T14:05:00Z",
+  "resourceType": "order",
+  "resourceVersion": "1.4",
+  "organizationId": "b3f1c2a0-4e5d-4a1b-9c8e-7d6f5a4b3c2d",
+  "createdById": "9d2c7e10-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+  "updatedById": "4e8a1b90-2c3d-4e5f-6a7b-8c9d0e1f2a3b"
+}
+```
+
 ### 7.10 Enumerate the lifecycle states of every stateful resource.
 
 [REQUIRED] Resources with a lifecycle shall enumerate its possible states. Whether a lifecycle resource supports hard DELETE, a terminal state, or both is the resource designer's decision, made per resource. *Rationale:* An explicit state enumeration makes resource behavior reviewable, testable, and predictable to every consumer instead of emergent from implementation.
@@ -394,6 +441,10 @@ and release notes — and is addressed on the collection rather than an instance
 
 [REQUIRED] DELETE shall remove the resource and be idempotent (not safe); subsequent access returns Not Found. *Rationale:* Idempotent deletion lets clients retry after a lost response without special-casing.
 
+
+### 9.5 Document HEAD only by exception, with a stated rationale.
+
+[REQUIRED] An API shall answer HEAD wherever it answers GET, returning exactly the headers the GET would produce with no body — RFC 9110 requires that of every general-purpose server, so it is not a per-endpoint decision. It shall not be *documented* as an operation by default. A HEAD operation shall appear in the OpenAPI definition only where a consumer need exists that GET does not meet — typically a large representation whose existence, size, or freshness is checked far more often than it is read, or a cache, monitor, or crawler contract that requires it — and that operation's description shall state the rationale. *Rationale:* Answering HEAD costs nothing and is obligatory; publishing it does not and is not. Application clients GET, because the headers arrive with the body anyway, so a documented HEAD beside every GET is an operation almost nobody calls that doubles the contract, its reference documentation, its tests, and its generated clients. Keeping the published surface to the operations consumers actually call is what makes the contract readable.
 
 ### 9.6 Reject any verb outside the approved set.
 
@@ -686,6 +737,11 @@ and release notes — and is addressed on the collection rather than an instance
 
 [REQUIRED] Credentials, tokens, and keys shall never appear in URLs, log output, or source repositories. *Rationale:* Each of these is routinely retained and widely readable, making them the most common source of credential leaks.
 
+### 13.7 Assign tenancy and ownership from the authenticated identity, never from the client.
+
+[REQUIRED] A resource's owning organization (its tenancy) and its creator shall be assigned by the server from the authenticated caller's identity at creation, and shall be immutable thereafter. The identity of the most recent writer is likewise taken from the authenticated caller and never from client input, but is rewritten on every change rather than being immutable (§7.9). The API shall never read tenancy, ownership or either identity from client input: a create or update payload carrying any of them is rejected, or the fields are ignored — never honored. Reads may expose them only as read-only provenance metadata (§7.9). *Rationale:* Deriving tenancy from the token and never the payload is what prevents a caller from creating or moving a resource into another organization's scope (a tenancy-escape / IDOR class of flaw); making ownership server-assigned and immutable keeps a resource with its owning organization independently of who created it or who later edits it — the organization owns the resource through the member who created it, but that ownership does not follow the user out of the organization.
+
+
 ## 14. Asynchronous Operations
 
 ### 14.1 Keep the API runtime free of blocking work.
@@ -714,9 +770,9 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 14.7 Offer batch operations through the shared batch idiom.
 
-**⚠ Requires further editing:** the batch idiom below needs more elaboration before adoption; excluded from v1.0.
-
 [OPTIONAL] A batch operation may be offered when a routine consumer workflow applies the same operation to many items, making per-item calls prohibitively chatty. Where offered, the batch shall follow the shared idiom: a POST to the collection URL with batch as the final path segment; a request body carrying an items array, bounded by a contract-declared maximum batch size and rejected with 400 above it; non-transactional execution returning 200 with a per-item items array positionally aligned to the request, each entry carrying its own status code and, on failure, the standard error body (§12.17); and the asynchronous operation pattern (§14.2) when the batch cannot complete within the synchronous threshold. *Rationale:* One shared idiom keeps batch bounds, partial-failure behavior, and result alignment identical everywhere, so consumers learn it once. *Example:* `POST https://api.example.com/v1/orders/batch`
+
+**⚠ Requires further editing:** the batch idiom below needs more elaboration before adoption; excluded from v1.0.
 
 ## 15. Collections
 
@@ -985,13 +1041,11 @@ paths:
 
 [REQUIRED] Every API shall expose a health endpoint at the reserved path segment health, reporting its own liveness and readiness: 200 when able to serve, 503 otherwise. The response body is exactly `{ "status": "UP" }` with 200 and `{ "status": "DOWN" }` with 503 — a single status attribute whose only values are UP and DOWN. The endpoint is probed internally, is exempt from authentication and rate limiting, and shall not be exposed through the public gateway. *Rationale:* Orchestrators and load balancers route and restart on the API's own verdict; a probe that needs credentials or rate budget cannot be trusted precisely when things are failing, and one fixed body shape keeps every prober trivial. *Example:* `GET .../health` returns 200 with `{ "status": "UP" }`
 
-## References & Glossary
-
-### Normative References
+## Normative References
 
 This standard depends on: RFC 2119 (requirement keywords), RFC 4122 (UUID), RFC 3339 / ISO 8601 (date-time), the HTTP specifications (RFC 7230–7235 / RFC 9110), RFC 9457 (Problem Details), RFC 6749 (OAuth 2), OData $filter (query syntax), ISO 4217 (currency), ISO 3166 (country), and BCP 47 (language tags). *Rationale:* Naming the normative basis keeps settled questions settled and points implementers to the authoritative source.
 
-### Glossary
+## Glossary
 
 Key terms are defined here and used consistently throughout. *Rationale:* A shared glossary prevents the same word from carrying different meanings across sections.
 

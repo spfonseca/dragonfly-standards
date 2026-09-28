@@ -1,3 +1,35 @@
+---
+shortName: APICL
+description: 'How software calls HTTP APIs it does not control: responses validated against an owned schema
+  before use, and timeouts, retries, idempotency, rate limits, circuit breaking, credentials and telemetry
+  set explicitly rather than left to a library''s defaults.'
+adoptionMetrics:
+- Share of production API clients documenting an explicit value for every per-client decision
+- Share of production API clients validating responses against an owned schema before use
+impactMetrics:
+- Incidents per quarter in which a failing or slow dependency exhausted a caller's threads, connections
+  or memory
+- Duplicate business outcomes caused by client retries
+- Upstream response-format changes caught as contract failures rather than reaching the caller's data
+tags:
+- api
+- http-client
+- integration
+- resilience
+softwareLifecycle:
+- ARCHITECTURE_AND_DESIGN
+- IMPLEMENTATION
+- VERIFICATION_AND_TESTING
+solutionScope:
+- APIS_AND_INTEGRATIONS
+- DEPENDENCIES_AND_EXTERNAL_SERVICES
+architectureQualities:
+- RESILIENCE
+- RELIABILITY
+- SECURITY
+- OBSERVABILITY
+---
+
 # API Client Design Standard
 
 | Field | Value |
@@ -900,8 +932,10 @@ its author's idea of the API; these prove it matches the API.
 
 ## 24. Per-Client Decisions
 
+### 24.1 Set an explicit value for each per-client decision.
+
 [REQUIRED] Every production API client shall document, configure or inherit an explicit value for
-each of the following. *Rationale:* Each is a decision a library will otherwise make silently.
+each of the following.
 
 | Concern | Decision |
 |---|---|
@@ -927,11 +961,14 @@ each of the following. *Rationale:* Each is a decision a library will otherwise 
 | Telemetry | Dependency name, operation naming, redaction |
 | Data classification | What data may leave the calling service for this dependency |
 
+*Rationale:* Each is a decision a library will otherwise make silently.
+
 ## 25. Implementation Defaults
 
+### 25.1 Use the implementation defaults where nothing gives a better value.
+
 [REQUIRED] Where an API-specific requirement or a measured service level gives no better value, a
-client shall use these defaults. *Rationale:* A stated default is reviewable; an inherited library
-default is not.
+client shall use these defaults.
 
 | Setting | Default |
 |---|---|
@@ -955,6 +992,8 @@ default is not.
 | Credential logging | Prohibited |
 | Retry ownership | One layer |
 | Concurrency and pending work | Explicitly bounded |
+
+*Rationale:* A stated default is reviewable; an inherited library default is not.
 
 The logical-call deadline has no universal numeric default on purpose. A 500 ms internal lookup, a
 5-second partner call and a multi-minute export initiation have different budgets; each client
@@ -1049,31 +1088,17 @@ Each of these is prohibited by a requirement above:
 
 ## Glossary
 
-**API client** --- A component responsible for invoking operations exposed by an API it does not own.
-
-**Logical call** --- The application-level invocation of an API operation, including every physical
-attempt needed to reach a final result.
-
-**Physical attempt** --- One transmission of a request over the network.
-
-**Deadline** --- The latest time by which a logical call must complete.
-
-**Timeout** --- A bound on one wait or phase, such as connection establishment or reading a response.
-
-**Retry budget** --- The bounded number of attempts, and time, available for retries.
-
-**Owned schema** --- The JSON Schema a caller keeps for an API's responses, covering what it depends
-on; the caller's statement of the contract as it uses it.
-
-**Idempotency key** --- A stable identifier sent with every attempt of one logical mutation so the
-server can recognize duplicates.
-
-**Ambiguous outcome** --- A mutation whose execution the client cannot confirm or rule out.
-
-**Backpressure** --- Mechanisms that stop work from overwhelming a dependency or the client's own
-resources.
-
-**Circuit breaker** --- A mechanism that temporarily stops calls to a dependency after defined failure
-conditions are met.
-
-**Problem details** --- The machine-readable HTTP API error representation `application/problem+json`.
+| Term | Definition |
+|---|---|
+| API client | A component responsible for invoking operations exposed by an API it does not own. |
+| Logical call | The application-level invocation of an API operation, including every physical attempt needed to reach a final result. |
+| Physical attempt | One transmission of a request over the network. |
+| Deadline | The latest time by which a logical call must complete. |
+| Timeout | A bound on one wait or phase, such as connection establishment or reading a response. |
+| Retry budget | The bounded number of attempts, and time, available for retries. |
+| Owned schema | The JSON Schema a caller keeps for an API's responses, covering what it depends on; the caller's statement of the contract as it uses it. |
+| Idempotency key | A stable identifier sent with every attempt of one logical mutation so the server can recognize duplicates. |
+| Ambiguous outcome | A mutation whose execution the client cannot confirm or rule out. |
+| Backpressure | Mechanisms that stop work from overwhelming a dependency or the client's own resources. |
+| Circuit breaker | A mechanism that temporarily stops calls to a dependency after defined failure conditions are met. |
+| Problem details | The machine-readable HTTP API error representation `application/problem+json`. |
