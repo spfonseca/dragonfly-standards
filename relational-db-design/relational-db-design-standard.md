@@ -32,8 +32,6 @@ industryReferences:
   url: https://www.postgresql.org/docs/
 - title: RFC 9562 — Universally Unique Identifiers (UUIDs)
   url: https://www.rfc-editor.org/rfc/rfc9562
-supportingStandards:
-- APIDS-v1
 ---
 
 # Relational DB Design Standard
