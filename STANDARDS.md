@@ -28,3 +28,48 @@ in its header table; this index and that header must agree.
 | [Testing and Verification Standard](testing/testing-standard-1.0.md) | Which failure conditions must be exercised deliberately — duplicate delivery, termination mid-commit, retry exhaustion, downstream timeouts, concurrent races, shutdown, and resource exhaustion — rather than only the path the code was designed for. Skeleton. | Draft |
 | [Compute Best Practices in Kubernetes](compute-k8s/compute-k8s-standard-1.0.md) | What any workload owes the cluster it runs on — resource requests and limits, probes, termination handling, image and manifest discipline, and workload security. Skeleton. | Draft |
 | [Compliance and Data Retention Standard](compliance/compliance-standard-1.0.md) | How long data is kept, on what basis, and what happens when the period ends — classification, retention, deletion, and the record that survives it. Applies to data a system holds incidentally as much as to the records a product is built around. Skeleton. | Draft |
+
+## Authoring format
+
+Every standard is written so it converts, unedited, into the platform's `standards` resource:
+`scripts/publish-to-content.py --check` converts them all and names every line that breaks this
+format; `--project <env project>` publishes them. A standard that does not convert is not published.
+
+**Front matter** — what the prose does not carry, as YAML between `---` lines at the top of the file:
+
+```yaml
+---
+shortName: APIDS                  # five capital letters; the same in every version
+description: >-                   # at most 320 characters
+  One or two sentences on what the standard governs.
+adoptionMetrics: [...]            # how adoption is measured; at least one
+impactMetrics: [...]              # how its effect is measured; at least one
+tags: [...]
+softwareLifecycle: [...]          # the service's values, e.g. ARCHITECTURE_AND_DESIGN
+solutionScope: [...]              # e.g. APIS_AND_INTEGRATIONS
+architectureQualities: [...]      # e.g. RELIABILITY
+industryReferences:               # optional
+  - {title: ..., url: https://...}
+supportingStandards: [APIDS-v1]   # optional; each must have a Published version here
+---
+```
+
+**Header** — `# <Title>`, the same in every version, then the table with **Version**
+(`<major>.<minor>`), **Status** (Published, Draft, Retired) and **Author** (first and last name).
+A **Short Name** row, where present, matches the front matter.
+
+**Unnumbered sections** — `## Purpose`, `## Value Proposition` (bullets, each
+`- **Label** — text`), `## Scope` and any other reading matter, before or after the numbered
+sections. `## Glossary`, where present, is one table, `| Term | Definition |`.
+
+**Numbered sections** — `## N. Name`, numbered from 1 without gaps, each holding at least one
+guideline and nothing normative outside one.
+
+**Guidelines** — `### N.M <Directive.>`, numbered from 1 within the section without gaps. The body
+opens with the level, `[REQUIRED]`, `[RECOMMENDED]` or `[OPTIONAL]`, then the normative text, then
+`*Rationale:* <why>`, then any `*Example:* <example>` blocks. Each marker may start a line or follow
+the text inline. A guideline may carry further statements, each `[LEVEL] text *Rationale:* why`;
+the guideline's level is its first statement's.
+
+The Status maps to the resource's state: Published loads ACTIVE, Draft loads DRAFT, Retired loads
+RETIRED.

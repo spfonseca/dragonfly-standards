@@ -1,7 +1,42 @@
+---
+shortName: APIDS
+description: A single set of conventions for naming, versioning, error handling, security and lifecycle
+  management, so that every REST API the organization builds behaves like part of one coherent platform
+  rather than a collection of independently invented interfaces.
+adoptionMetrics:
+- Share of APIs in the catalog whose contract passes the automated conformance audit
+- Share of new services instantiated from a conforming pattern rather than hand-built
+impactMetrics:
+- Median time from contract sign-off to first consumer integration
+- Consumer-reported defects attributable to guessed-at semantics
+tags:
+- api
+- integration
+- design
+softwareLifecycle:
+- ARCHITECTURE_AND_DESIGN
+- IMPLEMENTATION
+solutionScope:
+- SOFTWARE_ARCHITECTURE
+- APIS_AND_INTEGRATIONS
+architectureQualities:
+- INTEROPERABILITY
+- MAINTAINABILITY
+- USABILITY
+industryReferences:
+- title: RFC 2119 — Key words for use in RFCs to Indicate Requirement Levels
+  url: https://www.rfc-editor.org/rfc/rfc2119
+- title: RFC 9457 — Problem Details for HTTP APIs
+  url: https://www.rfc-editor.org/rfc/rfc9457
+- title: RFC 9110 — HTTP Semantics
+  url: https://www.rfc-editor.org/rfc/rfc9110
+---
+
 # RESTful API Design Standard for Enterprise Reuse
 
 | Field | Value |
 |---|---|
+| **Short Name** | APIDS |
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
@@ -1012,13 +1047,11 @@ paths:
 
 [REQUIRED] Every API shall expose a health endpoint at the reserved path segment health, reporting its own liveness and readiness: 200 when able to serve, 503 otherwise. The response body is exactly `{ "status": "UP" }` with 200 and `{ "status": "DOWN" }` with 503 — a single status attribute whose only values are UP and DOWN. The endpoint is probed internally, is exempt from authentication and rate limiting, and shall not be exposed through the public gateway. *Rationale:* Orchestrators and load balancers route and restart on the API's own verdict; a probe that needs credentials or rate budget cannot be trusted precisely when things are failing, and one fixed body shape keeps every prober trivial. *Example:* `GET .../health` returns 200 with `{ "status": "UP" }`
 
-## References & Glossary
-
-### Normative References
+## Normative References
 
 This standard depends on: RFC 2119 (requirement keywords), RFC 4122 (UUID), RFC 3339 / ISO 8601 (date-time), the HTTP specifications (RFC 7230–7235 / RFC 9110), RFC 9457 (Problem Details), RFC 6749 (OAuth 2), OData $filter (query syntax), ISO 4217 (currency), ISO 3166 (country), and BCP 47 (language tags). *Rationale:* Naming the normative basis keeps settled questions settled and points implementers to the authoritative source.
 
-### Glossary
+## Glossary
 
 Key terms are defined here and used consistently throughout. *Rationale:* A shared glossary prevents the same word from carrying different meanings across sections.
 

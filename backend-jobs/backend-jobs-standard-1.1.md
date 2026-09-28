@@ -1,4 +1,41 @@
-# Backend Job Design Standard v1.1 (draft)
+---
+shortName: BJOBS
+description: 'Approved execution patterns for backend work outside the request path (Simple Job, Queued
+  Worker, Batch / Parallel Job, Orchestrated Workflow) and the requirements for implementing them on Kubernetes:
+  state, idempotency, retries, concurrency, reconciliation, cancellation and shutdown.'
+adoptionMetrics:
+- Share of backend jobs with a documented, approved execution pattern and the requirements that drove
+  its selection
+- Share of backend jobs recording executions, attempts and lifecycle states under the common execution
+  contract
+impactMetrics:
+- Production incidents per quarter caused by duplicate execution, lost work or jobs stuck in a non-terminal
+  state
+- Median time to diagnose a failed job execution from its recorded state and failure category
+- Share of backend jobs using a pattern more complex than their workload requirements justify
+tags:
+- backend-jobs
+- batch
+- workflow
+- kubernetes
+- reliability
+softwareLifecycle:
+- ARCHITECTURE_AND_DESIGN
+- IMPLEMENTATION
+- DEPLOYMENT
+- OPERATE_AND_SUPPORT
+solutionScope:
+- SOFTWARE_ARCHITECTURE
+- APPLICATION_COMPONENTS
+- RUNTIME_AND_EXECUTION
+architectureQualities:
+- RELIABILITY
+- RECOVERABILITY
+- SCALABILITY
+- OPERABILITY
+---
+
+# Backend Job Design Standard
 
 | Field | Value |
 |---|---|
@@ -1250,6 +1287,11 @@ service primitive for bounded work or vice versa.
 
 ### 18.10 Use the following default mapping unless a documented requirement justifies an exception.
 
+[RECOMMENDED] Deviations from this mapping should document the workload
+characteristic that requires the alternative. *Rationale:* A default
+mapping gives engineers and AI a safe implementation path while
+preserving an escape hatch for real requirements. *Example:*
+
 | Execution concern | Kubernetes default |
 |---|---|
 | Simple bounded execution | `Job` |
@@ -1259,11 +1301,6 @@ service primitive for bounded work or vice versa.
 | Queue item requiring strong per-item isolation | `Job` created by a dispatcher/controller |
 | Workflow worker | `Deployment` |
 | Workflow durable state | Workflow engine / durable datastore, not Kubernetes object state |
-
-[RECOMMENDED] Deviations from this mapping should document the workload
-characteristic that requires the alternative. *Rationale:* A default
-mapping gives engineers and AI a safe implementation path while
-preserving an escape hatch for real requirements.
 
 ## 19. Kubernetes Pod and Job Runtime Requirements
 

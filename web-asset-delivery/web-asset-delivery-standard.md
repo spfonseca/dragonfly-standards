@@ -1,7 +1,40 @@
+---
+shortName: WEBAD
+description: 'How a product''s static web assets (the SPA shell, content-hashed bundles and public content)
+  are cached and routed at the CDN edge: a cache policy per content class, deep-link routing without error-code
+  overrides, and verification against the live edge.'
+adoptionMetrics:
+- Share of products serving a browser application whose deploy tooling stamps per-class cache metadata
+- Share of products whose post-deploy verification asserts a non-empty document and includes a conditional
+  request
+impactMetrics:
+- Deployments per quarter in which users received a stale shell or a blank page
+- Median time from deploy to all users loading the new release
+tags:
+- web
+- cdn
+- caching
+- spa
+- delivery
+softwareLifecycle:
+- IMPLEMENTATION
+- DEPLOYMENT
+- VERIFICATION_AND_TESTING
+solutionScope:
+- USER_INTERFACES
+- NETWORKING
+- DELIVERY_AND_AUTOMATION
+architectureQualities:
+- AVAILABILITY
+- PERFORMANCE
+- DEPLOYABILITY
+---
+
 # Web Asset Delivery Standard
 
 | Field | Value |
 |---|---|
+| **Short Name** | WEBAD |
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
@@ -13,6 +46,13 @@ This standard governs how a product's **static web assets** — the SPA shell, i
 public content — are cached and routed at the edge. The RESTful API Design Standard §17 covers
 caching of **API responses**; nothing covered it for static delivery, and the two failure modes
 below both reached a deployed environment as a result.
+
+## Value Proposition
+
+- **Releases that reach users** — a revalidated shell and immutable hashed bundles mean a deploy is picked up by browsers instead of being masked by a stale cached shell.
+- **Working deep links** — client-side paths are routed without error-code overrides, so a bookmarked or shared URL loads the application.
+- **Failures caught at deploy** — verification against the live edge detects the failure modes that previously reached a deployed environment.
+- **Static delivery governed** — covers the caching of static assets, which the rules for API responses do not.
 
 ## Scope
 

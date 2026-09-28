@@ -1,7 +1,40 @@
+---
+shortName: FMEAR
+description: The rubric a failure modes and effects analysis rates severity, occurrence and detection
+  under, so a 7 means the same in every analysis. One for the organization, served whole as the fmea-analysis/rubrics
+  resource and rated against rather than reinvented; severity dominates and no RPN is computed. Specific
+  to FMEA.
+adoptionMetrics:
+- Share of FMEAs whose ratings are all within 1–10 and rated against the published rubric
+- Share of experiences rendering an FMEA that explain a rating on demand
+impactMetrics:
+- Share of high-severity failure modes (9–10) with an action taken and a post-mitigation rating recorded
+- Median days from an FMEA reaching COMPLETE to its first action taken
+tags:
+- fmea
+- risk
+- decisioning
+- rubric
+softwareLifecycle:
+- ARCHITECTURE_AND_DESIGN
+- MAINTAIN_AND_EVOLVE
+solutionScope:
+- SOFTWARE_ARCHITECTURE
+- APPLICATION_COMPONENTS
+architectureQualities:
+- RELIABILITY
+- RESILIENCE
+- OPERABILITY
+industryReferences:
+- title: AIAG & VDA FMEA Handbook (2019)
+  url: https://www.aiag.org/quality/automotive-core-tools/fmea
+---
+
 # FMEA Rating Rubric Standard
 
 | Field | Value |
 |---|---|
+| **Short Name** | FMEAR |
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
@@ -15,6 +48,12 @@ every other. An FMEA's value is comparative — which failure modes deserve acti
 portfolio and over time — and ratings read against different anchors, or against none, cannot be
 compared. The rubric is therefore one for the organization, published once, and rated against
 rather than reinvented.
+
+## Value Proposition
+
+- **Comparable ratings** — a 7 means the same in every analysis, so failure modes can be ranked across a portfolio and over time.
+- **Action where it matters** — ratings read against common anchors show which failure modes deserve action first.
+- **One rubric, not many** — published once and rated against, the rubric is not reinvented by each analysis or each team.
 
 ## Scope
 
