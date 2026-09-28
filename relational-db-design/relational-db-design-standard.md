@@ -251,6 +251,15 @@ requires it.
 *Rationale:* Short transactions keep locks and pooled connections available, and per-operation
 escalation pays the serialization-failure cost only where it buys correctness.
 
+### 9.5 Keep a transaction within one database.
+
+[REQUIRED] A transaction spans a single database and no other participant. A service does not hold
+a distributed transaction across independently owned services, queues, or databases; each
+participant commits its own local transaction.
+*Rationale:* A distributed transaction couples availability and locking across systems that fail
+independently, and the atomicity it appears to offer is bought at the cost of every participant
+holding locks while the slowest one decides.
+
 ## 10. Observability
 
 ### 10.1 Consume the platform's database observability; build none per service.
