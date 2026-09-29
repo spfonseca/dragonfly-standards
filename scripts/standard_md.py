@@ -33,7 +33,7 @@ ARCHITECTURE_QUALITIES = {
 }
 FRONT_MATTER = {
     "shortName", "description", "adoptionMetrics", "impactMetrics", "tags", "softwareLifecycle",
-    "solutionScope", "architectureQualities", "industryReferences", "supportingStandards",
+    "solutionScope", "architectureQualities", "industryReferences",
 }
 
 SECTION = re.compile(r"^## (0|[1-9][0-9]*)\. (\S.*)$")
@@ -43,7 +43,6 @@ ANY_LEVEL = re.compile(r"\[(REQUIRED|RECOMMENDED|OPTIONAL)\]")
 MARKER = re.compile(r"(\*Rationale:\*|\*Examples?:\*)\s*")
 TABLE_ROW = re.compile(r"^\|\s*\*\*(.+?)\*\*\s*\|\s*(.*?)\s*\|\s*$")
 BULLET = re.compile(r"^-\s+\*\*(.+?)\*\*\s*(?:---|—|–|-)\s*(.*)$")
-SUPPORTING = re.compile(r"^[A-Z]{5}-v[1-9][0-9]*$")
 
 
 @dataclass
@@ -102,9 +101,6 @@ def _check_meta(meta: dict, problems: Problems) -> None:
     for ref in meta.get("industryReferences") or []:
         if not (isinstance(ref, dict) and set(ref) == {"title", "url"} and str(ref["url"]).startswith("http")):
             problems.add(1, "front matter: each `industryReferences` entry is `{title, url}`.")
-    for ref in meta.get("supportingStandards") or []:
-        if not SUPPORTING.fullmatch(str(ref)):
-            problems.add(1, f"front matter: `supportingStandards` entry `{ref}` must look like `APIDS-v1`.")
 
 
 def _header(lines: list[str], offset: int, problems: Problems) -> tuple[str, dict[str, str]]:
@@ -324,7 +320,6 @@ def convert(path: Path, root: Path) -> tuple[dict | None, list[str]]:
         "solutionScope": meta["solutionScope"],
         "architectureQualities": meta["architectureQualities"],
         "industryReferences": meta.get("industryReferences") or [],
-        "supportingStandards": meta.get("supportingStandards") or [],
         "additionalResources": [{"title": title, "url": f"{REPO_URL}/{rel}",
                                  "description": "The standard as authored, in Markdown.", "type": "CHECKLIST"}],
         "glossary": _glossary(lines, offset, problems),
