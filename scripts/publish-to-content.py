@@ -49,14 +49,6 @@ def convert_all() -> tuple[list[dict], list[str]]:
     for short, found in names.items():
         if len(found) > 1:
             problems.append(f"{short}: every version carries the same title; found {sorted(found)}.")
-    declared = {f"{s['shortName']}-v{s['majorVersionNumber']}" for s in standards}
-    active = {f"{s['shortName']}-v{s['majorVersionNumber']}" for s in standards if s["state"] == "ACTIVE"}
-    for s in standards:
-        for ref in s["supportingStandards"]:
-            if ref not in declared:
-                problems.append(f"{s['shortName']}: supporting standard {ref} is not in this repository.")
-            elif ref not in active:
-                problems.append(f"{s['shortName']}: supporting standard {ref} has no Published version.")
     standards.sort(key=lambda s: (s["shortName"], s["majorVersionNumber"], s["minorVersionNumber"]))
     return standards, problems
 

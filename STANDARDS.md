@@ -35,7 +35,7 @@ Every standard is written so it converts, unedited, into the platform's `standar
 `scripts/publish-to-content.py --check` converts them all and names every line that breaks this
 format; `--project <env project>` publishes them. A standard that does not convert is not published.
 
-**Front matter** — what the prose does not carry, as YAML between `---` lines at the top of the file:
+**Front matter** — what the prose does not carry (and never a reference to another standard: each stands alone), as YAML between `---` lines at the top of the file:
 
 ```yaml
 ---
@@ -50,7 +50,6 @@ solutionScope: [...]              # e.g. APIS_AND_INTEGRATIONS
 architectureQualities: [...]      # e.g. RELIABILITY
 industryReferences:               # optional
   - {title: ..., url: https://...}
-supportingStandards: [APIDS-v1]   # optional; each must have a Published version here
 ---
 ```
 
