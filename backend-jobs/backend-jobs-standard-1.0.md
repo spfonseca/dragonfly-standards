@@ -182,10 +182,10 @@ caused that pattern to be selected. *Rationale:* Recording the decision
 makes later complexity explainable and allows engineers and AI tools to
 reassess the architecture when workload characteristics change.
 
-### 1.6 Select a pattern for a reconciling job the same way, and apply Section 9 in addition.
+### 1.6 Select a pattern for a reconciling job the same way, and apply Section 8 in addition.
 
 [REQUIRED] A job whose purpose is to make one system agree with another shall select its execution
-pattern from the same four, on the same grounds, and shall additionally satisfy Section 9.
+pattern from the same four, on the same grounds, and shall additionally satisfy Section 8.
 *Rationale:* Reconciliation determines what a job decides to do, not how its work is decomposed, so
 it is orthogonal to the pattern rather than a fifth one — the same reconciler commonly runs as a
 Simple Job at small scale and as a Batch / Parallel Job or Queued Worker as its input grows, without
