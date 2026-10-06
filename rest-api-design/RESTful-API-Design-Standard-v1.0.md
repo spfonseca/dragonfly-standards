@@ -874,6 +874,24 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 
 [REQUIRED] Use ISO 4217 for currency, ISO 3166-1 alpha-2 for country, and BCP 47 for language tags. *Rationale:* Standard code sets make cross-API and cross-system data directly comparable. *Example:* `"currency": "USD", "country": "US", "language": "en-US"`
 
+### 15.7 A replace of a whole set shall carry across the server-owned fields of unchanged members.
+
+[REQUIRED] Where a PUT replaces a nested set whole, each member that is unchanged shall keep its
+server-owned values; only a member whose client-owned fields change shall have them recomputed.
+*Rationale:* a replace rebuilds every member, so a field such as "when this was last decided" is
+otherwise stamped afresh on every save, and the one question it exists to answer is lost the first
+time anything else in the set changes. Observed 2026-10-05 in the AI service, where an
+organization's stance on a model carries when it was taken.
+
+### 15.8 Server-owned members of a representation shall be refused on write, not ignored.
+
+[REQUIRED] A write that supplies a server-owned member shall be refused with a validation error
+naming it. *Rationale:* silently discarding it leaves a caller believing they set something they did
+not. The cost is that a read-modify-write must strip what it just read, which is the correct trade:
+a caller that cannot see which fields are theirs will get it wrong in both directions.
+
+---
+
 ## 17. Caching & Optimistic Concurrency
 
 ### 17.1 Declare cacheability explicitly on every response.
