@@ -28,6 +28,7 @@ in its header table; this index and that header must agree.
 | [Testing and Verification Standard](testing/testing-standard-1.0.md) | Which failure conditions must be exercised deliberately — duplicate delivery, termination mid-commit, retry exhaustion, downstream timeouts, concurrent races, shutdown, and resource exhaustion — rather than only the path the code was designed for. Skeleton. | Draft |
 | [Compute Best Practices in Kubernetes](compute-k8s/compute-k8s-standard-1.0.md) | What any workload owes the cluster it runs on — resource requests and limits, probes, termination handling, image and manifest discipline, and workload security. Skeleton. | Draft |
 | [Compliance and Data Retention Standard](compliance/compliance-standard-1.0.md) | How long data is kept, on what basis, and what happens when the period ends — classification, retention, deletion, and the record that survives it. Applies to data a system holds incidentally as much as to the records a product is built around. Skeleton. | Draft |
+| [Common Logical Information Model Standard](common-logical-information-model/common-logical-information-model-standard-1.0.md) | The single, technology-neutral definition of the business objects services hold — their attributes, relationships and identity — and how resource schemas map to it. Skeleton. | Draft |
 
 ## Authoring format
 
