@@ -20,7 +20,7 @@ architectureQualities: [INTEROPERABILITY, MAINTAINABILITY]
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-10-08 |
+| **Last Updated** | 2026-10-09 |
 
 ## Purpose
 
@@ -63,6 +63,41 @@ translation.
 [REQUIRED] Each attribute and each relationship of a business object shall be named and defined in
 the model, independent of how any system stores it. *Rationale:* An attribute without a definition
 is read differently by each service that holds it.
+
+### 2.2 Carry declared, product-owned classification in `classifications`.
+
+[REQUIRED] Where a business object is classified along one or more axes the product declares rather
+than its users, the attribute shall be named `classifications` and shall be an array of objects,
+each carrying a `name` — the axis — and a `value` — the position on it. *Rationale:* An object is
+classified along more than one axis almost as soon as it is classified at all, and an array of
+pairs admits a new axis as data, where an attribute per axis admits one only as a schema change.
+*Example:*
+
+```json
+"classifications": [
+  { "name": "area", "value": "library" },
+  { "name": "sensitivity", "value": "privileged" }
+]
+```
+
+### 2.3 Draw every classification name for a resource from an enumeration that resource declares.
+
+[REQUIRED] For a given resource, the permitted `name` values shall be declared as an enumeration in
+that resource's schema, and a classification naming an axis outside it shall be refused on write.
+The enumeration is per resource — two resources may classify along different axes — and an axis
+they share shall use the same name. *Rationale:* Without a declared set the axis is a free string,
+and one misspelling silently creates an axis that a screen then groups by, with nothing anywhere to
+show for it. Fixing the names while leaving the values open is what lets the vocabulary grow
+without the structure moving.
+
+### 2.4 Do not name a consumer-authored label and a declared classification alike.
+
+[REQUIRED] An attribute written by the people using the product, for their own retrieval, on which
+nothing is enforced, shall not share a name with one the product declares and a screen, report or
+authorization decision depends on. The open case is `tags`, an array of strings, presentation only;
+the declared case is `classifications` (§2.2). Neither substitutes for the other. *Rationale:* The
+two carry opposite guarantees — one may hold anything and may be absent, the other is a contract —
+and under one name a consumer treats whichever it met first as the rule, then builds on it.
 
 ## 3. Identity
 
