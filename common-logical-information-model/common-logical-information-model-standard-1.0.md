@@ -71,7 +71,11 @@ than its users, the attribute shall be named `classifications` and shall be an a
 each carrying a `name` — the axis — and a `value` — the position on it. *Rationale:* An object is
 classified along more than one axis almost as soon as it is classified at all, and an array of
 pairs admits a new axis as data, where an attribute per axis admits one only as a schema change.
-*Example:*
+A `name` shall appear at most once: an object holds one position on each axis, and a classification
+that genuinely takes several values is a different attribute, not a repeated name. *Rationale for
+the single value:* a list grouped by an axis needs exactly one bucket per object, and a repeated
+name leaves the renderer to show the object twice or pick one arbitrarily — neither of which any
+contract states. *Example:*
 
 ```json
 "classifications": [
