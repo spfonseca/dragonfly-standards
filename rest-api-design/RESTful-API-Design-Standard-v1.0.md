@@ -40,7 +40,7 @@ industryReferences:
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-09-24 |
+| **Last Updated** | 2026-10-09 |
 
 ## Purpose
 
@@ -456,6 +456,10 @@ and release notes — and is addressed on the collection rather than an instance
 ### 9.7 Use PUT to replace a value whole.
 
 [REQUIRED] PUT shall replace the entire value of the resource or sub-resource it addresses with the representation supplied — every attribute of that value, nothing partial — and shall be idempotent (not safe): repeating a PUT leaves the same state. PUT shall never create; a PUT to a nonexistent resource returns 404. Use it for values that change as a whole — a single-valued sub-resource such as a status — where PATCH's field-by-field merge would misdescribe the operation; use PATCH (§9.2) for partial updates of a resource. *Rationale:* A state change is a replacement, not a merge; naming it PUT tells the client the whole value is being set and that a retry is harmless. *Example:* `PUT /v1/rest-resources/{restResourceId}/status` with `{"status": "IN_REVIEW"}`.
+
+### 9.8 Replace an array-valued attribute whole under PATCH.
+
+[REQUIRED] When a PATCH body carries an attribute whose value is an array, the array supplied shall replace the stored array in its entirety — in the order sent, with every member not sent removed — and shall never be merged with the stored value member by member; an absent array attribute is left unchanged and a null one is cleared (§9.2, §16.6). Elements of such an array are not path-addressed and carry no identifier (contrast §8.8). *Rationale:* Without element identity there is no reliable way to match sent members to stored ones; replacing whole makes the outcome of a PATCH a pure function of its body, which a client can reason about and a reader can verify. *Example:* `PATCH {"strengths": ["Brand", "Reach"]}` leaves the record with exactly those two strengths, whatever it held before.
 
 ## 10. HTTP Headers
 
@@ -932,6 +936,9 @@ a caller that cannot see which fields are theirs will get it wrong in both direc
 
 [REQUIRED] Only responses to GET and HEAD are cacheable. Function API responses (§4.14) are served via POST and are therefore not cacheable, notwithstanding their side-effect-free semantics; this is an accepted trade-off of the POST-only rule. *Rationale:* Confining caching to safe methods keeps cache correctness independent of application semantics.
 
+### 17.10 Define the outcome of a write that loses a concurrent race.
+
+[REQUIRED] A write whose precondition was checked and then overtaken shall answer deterministically, never with a 5xx: if the resource was changed by another write after this request read it, 412 (§12.13); if the resource was deleted after this request read it, 404 (§12.10); a DELETE that finds the resource already gone answers 404 (§9.4). The version check and the write shall be atomic — one statement or one transaction — so no interleaving produces a lost update or a half-applied change. *Rationale:* Concurrent edits are normal in a multi-user system; a stable, documented outcome lets a client recover (reload and retry, or return to the list) where an internal error leaves it guessing.
 
 ## 18. Resource Expansion and Omission
 
