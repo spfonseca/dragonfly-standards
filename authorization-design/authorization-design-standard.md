@@ -1,7 +1,7 @@
 ---
 shortName: AUTHZ
 description: >-
-  How access to a platform's APIs and experiences is designed: scopes sized to experiences, facts on
+  How access to a platform's APIs and experiences is designed: one read and one write scope per service, facts on
   subjects, people and machine accounts as one kind of subject, tenancy from the token, deny by
   default within an organization, where checks run, platform-level facts, and roles.
 adoptionMetrics:
@@ -28,7 +28,7 @@ industryReferences:
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-09-13 |
+| **Last Updated** | 2026-10-10 |
 
 ## Purpose
 
@@ -97,14 +97,18 @@ with the test: if the answer depends on *which* object, it is a fact.
 
 ## 2. Scope Design
 
-### 2.1 Grant two scopes per top-level resource, per client, never per endpoint.
+### 2.1 Grant one read and one write scope per service, never per resource or endpoint.
 
-[REQUIRED] Two scopes per top-level resource, `<resource>:read` and `<resource>:write`, granted per
-client and never per endpoint: an experience is "browse it" or "manage it". Anything finer is a
-fact.
+[REQUIRED] Each service publishes two scopes, `<short code>:read` and `<short code>:write`, named for
+the service's short code and covering every resource it serves: the read scope admits the safe
+methods, the write scope everything that changes state. They are granted per client, never per
+resource, per endpoint or per operation. Which records a caller may reach, and what it may do to
+them, is decided by the authorization model — anything finer than the service is a fact.
 
-*Rationale:* Scopes coincide with experiences; an endpoint-level scope is a permission model
-wearing a scope's name.
+*Rationale:* A scope is a coarse grant to a client and rides in every token the client holds. A
+pair per resource grows the token with every resource built, until it no longer fits in a request
+header, and restates at a coarser grain what the model already decides per record; a pair per
+endpoint is a permission model wearing a scope's name.
 
 ### 2.2 Grant a client only the scopes of the experiences it offers.
 
@@ -114,11 +118,11 @@ user is never shown an entry point to data the client cannot render.
 
 *Rationale:* A caller without the scope should not be looking at the screen.
 
-### 2.3 Draft placeholder: a screen for one party may deserve its own resource and scope pair.
+### 2.3 Draft placeholder: a screen for one party is governed by facts, not a special scope.
 
 [OPTIONAL] To be filled before this standard leaves Draft: when a screen exists for one party only
-(platform administration, say), that is a sign it may deserve a resource — and therefore a scope
-pair — of its own, rather than a special scope.
+(platform administration, say), that is a sign it may deserve a resource of its own, reached through
+a platform-level fact (§7), rather than a special scope.
 
 *Rationale:* Placeholder for authored text.
 

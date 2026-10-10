@@ -40,7 +40,7 @@ industryReferences:
 | **Version** | 1.1 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-10-09 |
+| **Last Updated** | 2026-10-10 |
 
 ## Purpose
 
@@ -745,6 +745,10 @@ and release notes — and is addressed on the collection rather than an instance
 
 [REQUIRED] A resource's owning organization (its tenancy) and its creator shall be assigned by the server from the authenticated caller's identity at creation, and shall be immutable thereafter. The identity of the most recent writer is likewise taken from the authenticated caller and never from client input, but is rewritten on every change rather than being immutable (§7.9). The API shall never read tenancy, ownership or either identity from client input: a create or update payload carrying any of them is rejected, or the fields are ignored — never honored. Reads may expose them only as read-only provenance metadata (§7.9). *Rationale:* Deriving tenancy from the token and never the payload is what prevents a caller from creating or moving a resource into another organization's scope (a tenancy-escape / IDOR class of flaw); making ownership server-assigned and immutable keeps a resource with its owning organization independently of who created it or who later edits it — the organization owns the resource through the member who created it, but that ownership does not follow the user out of the organization.
 
+
+### 13.8 Publish one read and one write scope per service, and decide everything finer in the authorization engine.
+
+[REQUIRED] Each service shall publish exactly two OAuth scopes, `<short code>:read` and `<short code>:write`, named for its short code (§2.11) and covering every resource it serves: an operation using GET or HEAD requires the read scope, and every other operation requires the write scope. A service shall not publish a scope per resource, per endpoint or per operation; which records a caller may reach and what it may do to them is decided per request by the authorization engine (§13.3). Backend-for-Frontend endpoints (§8.11) are the one exception: they are granted by a pair of their own, `bff:read` and `bff:write`, held by the product's browser application and no other client. A missing scope yields 403, never 401. *Rationale:* A scope is a coarse grant to a client, carried in every token the client holds; one pair per resource grows the token with every resource built and duplicates, at a coarser grain, decisions the authorization engine already makes per record. Two per service keeps the token small, lets a new resource or endpoint ship without a new grant, and leaves one place where access is decided. *Example:* the Technology Strategy Service (`techst`) publishes `techst:read` and `techst:write`, which govern its technology radars and technology adoption curves alike
 
 ## 14. Asynchronous Operations
 
