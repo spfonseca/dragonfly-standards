@@ -101,7 +101,9 @@ with the test: if the answer depends on *which* object, it is a fact.
 
 [REQUIRED] Each service publishes two scopes, `<short code>:read` and `<short code>:write`, named for
 the service's short code and covering every resource it serves: the read scope admits the safe
-methods, the write scope everything that changes state. They are granted per client, never per
+methods and every pure function — a computation that changes nothing, even when it is called with
+POST because it takes a body — and the write scope everything that changes state. They are granted
+per client, never per
 resource, per endpoint or per operation. Which records a caller may reach, and what it may do to
 them, is decided by the authorization model — anything finer than the service is a fact.
 
