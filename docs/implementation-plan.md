@@ -51,3 +51,29 @@
 ## Backlog
 
 - **Publish from CI rather than by hand**, authenticating through workload identity federation.
+- **Review the owned-record resource pattern, and move what is standard-setting out of it.**
+  `dragonfly-app-platform-svs/rest-microsvs-python-shareddb/owned-record-resource-pattern.md` was
+  written by AI and has never been reviewed. It says of itself that it "adds no rule" to the API
+  standard or the authorization pattern and only fixes choices they leave open. Most of it does
+  exactly that. Some of it does not: it states general rules that hold for any resource, which
+  makes a pattern into a standard by the back door — a rule read only by services that happen to
+  call themselves owned records.
+
+  The candidates for promotion, as a starting hypothesis rather than a conclusion:
+
+  | In the pattern today | Belongs in |
+  |---|---|
+  | A list whose authorization answer may be incomplete is `503` with `Retry-After`, never a short page | RESTful API Design Standard, or Authorization Design |
+  | The race outcomes — PATCH after PATCH is `412`, PATCH or DELETE after DELETE is `404`, never `412` | RESTful API Design Standard |
+  | Authorization tuples are written after the row commits, so a failed insert leaves no grant | Authorization Tuple Management Standard |
+  | A write's check is sent `HIGHER_CONSISTENCY`; a read's may lag the cache TTL | Authorization Design Standard |
+
+  Genuine instantiation, and staying: the page-size cap, `q` left out, no `Idempotency-Key` on
+  create, DELETE taking no `If-Match`, the default sort, and three roles per resource.
+
+  **Why it matters now.** The pattern is already load-bearing — the SDK implements it as
+  `dragonfly_service_sdk.owned_record`, the microservice pattern's `CLAUDE.md` instructs builds to
+  follow it, and `ai-chat-conversations` inherits eleven decisions from it by citation. Services
+  are accepting unreviewed rules one requirements document at a time. Until the review lands, a
+  requirements document citing it should say the pattern is not reviewed and list what it is
+  accepting, as that one now does.
