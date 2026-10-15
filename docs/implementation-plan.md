@@ -68,6 +68,13 @@
   | Authorization tuples are written after the row commits, so a failed insert leaves no grant | Authorization Tuple Management Standard |
   | A write's check is sent `HIGHER_CONSISTENCY`; a read's may lag the cache TTL | Authorization Design Standard |
 
+  A fifth is a different failure: the pattern's create rule reads "any member, **never a guest**",
+  which assumes a guest exists as a distinct principal and that a resource pattern is where to say
+  so. Whether guests are a kind of principal at all — as against a user who acts in their own
+  organization and simply reaches fewer artifacts — is the Authorization Design Standard's
+  question. Found 2026-10-15 while writing `ai-chat-conversations`, where the rider described
+  nothing: a conversation is created empty and belongs to whoever started it.
+
   Genuine instantiation, and staying: the page-size cap, `q` left out, no `Idempotency-Key` on
   create, DELETE taking no `If-Match`, the default sort, and three roles per resource.
 
