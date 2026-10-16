@@ -52,7 +52,7 @@
 
 - **Publish from CI rather than by hand**, authenticating through workload identity federation.
 - **Review the owned-record resource pattern, and move what is standard-setting out of it.**
-  `dragonfly-app-platform-svs/rest-microsvs-python-shareddb/owned-record-resource-pattern.md` was
+  `dragonfly-app-platform-svs-kit/rest-microsvs-python-shareddb/owned-record-resource-pattern.md` was
   written by AI and has never been reviewed. It says of itself that it "adds no rule" to the API
   standard or the authorization pattern and only fixes choices they leave open. Most of it does
   exactly that. Some of it does not: it states general rules that hold for any resource, which
