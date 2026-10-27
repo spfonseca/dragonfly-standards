@@ -146,9 +146,11 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 [REQUIRED] All APIs shall be rate limited. Where the limit is enforced — edge, gateway, or provider — and how limits are derived are deliberately left to the implementing platform. *Rationale:* An API with no limit lets a single consumer exhaust capacity every other consumer depends on, which is the part worth mandating organization-wide; fixing the mechanism as well would presume subscription tiers and traffic shapes that differ per platform and are often not yet known when the API is designed.
 
-### 2.11 Give every service a globally unique name and short code.
+### 2.11 Give every service, and every service domain, a globally unique name and short code.
 
 [REQUIRED] Every service shall have a globally unique business name and a globally unique **short code** of no more than six lowercase alphanumeric characters, both recorded before any artifact is created for the service — in the service registry (§2.3), or, for a service §8.13 keeps out of it, in the product's own declaration of the services it runs, which is what enforces uniqueness for that service; the top-level resource names a service owns (§7.1) shall likewise be unique across all services. *Rationale:* One governed short code lets a single identity name every artifact a service needs — deployment namespace, runtime identity, database and credentials, image repository, event topics — instead of an abbreviation improvised per artifact later; and because version-first URLs (§8.3) carry no service segment, globally unique resource names are what allow a request to be routed to exactly one service. *Example:* service `E-Commerce`, short code `ecom`, owning `/orders` and `/line-items`
+
+[REQUIRED] Every service domain (§3.1) shall have a globally unique short code of the same form, recorded with the domain in the service registry (§2.3) and fixed once recorded. *Rationale:* Some artifacts belong to a domain rather than to any one of its services, and the domain's code names them the way a service's code names its own; the event types a domain's services publish are namespaced by it, so a type keeps its name when the service that publishes it is split or replaced. *Example:* domain `Identity and Organization`, short code `ident`, namespacing the event type `ident.organization-suspended.1`
 
 ### 2.12 Derive the deployment namespace from the short code and major version.
 
