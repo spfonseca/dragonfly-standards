@@ -230,7 +230,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 4.14 Use Function APIs to compute values.
 
-[REQUIRED] A Function API computes a value and shall be pure — never producing side effects; it uses POST only, its URL is the verb under the service name, and, changing nothing, it requires the service's read scope (§13.8). *Rationale:* A declared-pure computation can be called freely from any workflow without state consequences. *Example:* `/pricing/calculate`
+[REQUIRED] A Function API computes a value and shall be pure — never producing side effects; it uses POST only, and, changing nothing, it requires the service's read scope (§13.8). Its URL is the verb as the last path segment: on the one resource instance it computes over, or, when it computes over no one instance, under the service name. *Rationale:* A declared-pure computation can be called freely from any workflow without state consequences, and one that answers about a single record is addressed where that record is. *Example:* `/pricing/calculate`; `/media-files/{mediaFileId}/extract-text`
 
 ### 4.15 Use Task APIs to perform a business action on a single resource.
 
