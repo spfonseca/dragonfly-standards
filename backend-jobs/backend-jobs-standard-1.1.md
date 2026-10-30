@@ -9,9 +9,9 @@ adoptionMetrics:
 - Share of backend jobs recording executions, attempts and lifecycle states under the common execution
   contract
 impactMetrics:
-- Production incidents per quarter caused by duplicate execution, lost work or jobs stuck in a non-terminal
+- Production incidents per quarter caused by duplicate execution, lost work or backend jobs stuck in a non-terminal
   state
-- Median time to diagnose a failed job execution from its recorded state and failure category
+- Median time to diagnose a failed backend job execution from its recorded state and failure category
 - Share of backend jobs using a pattern more complex than their workload requirements justify
 tags:
 - backend-jobs
@@ -57,14 +57,14 @@ observably, recoverably, scalably, and safely.
 
 -   **Consistent architecture decisions** --- engineers choose from a
     small set of approved execution patterns instead of inventing a new
-    job architecture for each workload.
+    backend job architecture for each workload.
 -   **Simpler solutions** --- selection begins with the simplest viable
     pattern and introduces queues, parallelism, or orchestration only
     when workload requirements justify them.
 -   **Reliable execution** --- common expectations for idempotency,
     retries, failure isolation, recovery, and state management prevent
     recurring classes of production failure.
--   **Operational consistency** --- every job exposes enough execution
+-   **Operational consistency** --- every backend job exposes enough execution
     state, telemetry, and context to be operated and supported
     predictably.
 -   **AI-ready guidance** --- explicit pattern characteristics and
@@ -98,26 +98,26 @@ Five further concerns are deliberately outside it, because none is
 particular to a backend job and each is identical for a workload that
 serves requests:
 
-- **Observability** — what a job emits, measures and traces. A job owes
+- **Observability** — what a backend job emits, measures and traces. A backend job owes
   the material an alert is built from, which is a reporting obligation
   and appears here as such (8.8, 8.12, 19.11). Section 21 is the
-  exception: it levies the alerts that are about a job's own outcome,
-  because nothing else can know what a job was supposed to do. How an
+  exception: it levies the alerts that are about a backend job's own outcome,
+  because nothing else can know what the backend job was supposed to do. How an
   alert is delivered, routed and acknowledged is not addressed here.
 - **Testing** — how a workload is proven against duplicate delivery,
   termination mid-commit, retry exhaustion, downstream timeouts,
   concurrent races and resource exhaustion. Section 16 keeps only the
-  two proofs that name a job pattern directly.
+  two proofs that name a backend job pattern directly.
 - **Workload security on Kubernetes** — the identity a Pod runs as, the
   privileges it holds, what it may reach, how its image is named and how
   its manifests are delivered. Section 14 covers the identity and
-  credentials a job needs to do its own work, which is a different
+  credentials a backend job needs to do its own work, which is a different
   question.
 - **Transport** — what a queue guarantees about delivery, ordering and
   duplication. A pattern may name what feeds it; what that thing
   guarantees is not defined here.
 - **Data retention** — how long execution history, dead-lettered work,
-  checkpoints and idempotency records may be kept. A job's retry and
+  checkpoints and idempotency records may be kept. A backend job's retry and
   replay window is an input to that period; the period itself is settled
   by classification and audit policy and is not set here.
 
@@ -159,7 +159,7 @@ demonstrated problem rather than anticipate one.
 
 ### 1.3 Base pattern selection on execution requirements rather than trigger mechanism.
 
-[RECOMMENDED] A job's execution pattern should be selected independently
+[RECOMMENDED] A backend job's execution pattern should be selected independently
 of whether it is started by a schedule, event, message, API request,
 data change, or operator action. *Rationale:* The mechanism that starts
 work does not determine how that work must be decomposed, coordinated,
@@ -177,20 +177,20 @@ a repeatable basis for selecting one pattern over another.
 
 ### 1.5 Document the selected pattern and the requirements that drove the decision.
 
-[RECOMMENDED] The job's architecture documentation should identify its
+[RECOMMENDED] The backend job's architecture documentation should identify its
 execution pattern and briefly record the workload characteristics that
 caused that pattern to be selected. *Rationale:* Recording the decision
 makes later complexity explainable and allows engineers and AI tools to
 reassess the architecture when workload characteristics change.
 
-### 1.6 Select a pattern for a reconciling job the same way, and apply Section 8 in addition.
+### 1.6 Select a pattern for a reconciling backend job the same way, and apply Section 8 in addition.
 
-[REQUIRED] A job whose purpose is to make one system agree with another shall select its execution
+[REQUIRED] A backend job whose purpose is to make one system agree with another shall select its execution
 pattern from the same four, on the same grounds, and shall additionally satisfy Section 8.
-*Rationale:* Reconciliation determines what a job decides to do, not how its work is decomposed, so
+*Rationale:* Reconciliation determines what a backend job decides to do, not how its work is decomposed, so
 it is orthogonal to the pattern rather than a fifth one — the same reconciler commonly runs as a
 Simple Job at small scale and as a Batch / Parallel Job or Queued Worker as its input grows, without
-becoming a different kind of job.
+becoming a different kind of backend job.
 
 ## 2. Approved Execution Patterns
 
@@ -214,7 +214,7 @@ state.
 continuously, taking independent items as they arrive and stopping only
 when it is told to. *Rationale:* This is the one pattern that does not
 end by finishing its work, and everything that distinguishes it follows
-from that: it deploys as a long-running workload rather than a Job, it
+from that: it deploys as a long-running workload rather than a Kubernetes Job, it
 scales by replica count rather than by schedule, it is stopped by a
 signal rather than by completion, and its shutdown is a drain rather than
 an exit. Whether the items arrive on a queue is how it is fed, not what
@@ -236,7 +236,7 @@ discoverable bounded collection must be processed as one logical
 execution and throughput can benefit from partitioning or concurrent
 processing. The pattern may use serial batches, partitions,
 fan-out/fan-in, or other bounded parallel-processing techniques while
-retaining one logical job boundary. *Rationale:* Explicit partitioning
+retaining one logical backend job boundary. *Rationale:* Explicit partitioning
 and parallelism allow large finite workloads to complete efficiently
 without converting every item into an independently managed long-lived
 workflow.
@@ -274,7 +274,7 @@ Work is fanned out for one of two reasons, and they route differently:
   homogeneous, the gain is throughput, and the items are independent of
   each other. This is what the Batch / Parallel Job pattern is for, and
   it is the more common case by a wide margin. The signal to look for is
-  a job that iterates a collection applying the same logic to each
+  a backend job that iterates a collection applying the same logic to each
   element — that is a partitionable workload whether or not it was
   written as one.
 
@@ -292,12 +292,12 @@ branches is bounded at three however much capacity is available.
 
 ## 3. Common Execution Contract
 
-### 3.1 Model every job as executions, work items and attempts.
+### 3.1 Model every backend job as executions, work items and attempts.
 
-[REQUIRED] A job shall identify its work using this model, and the terms
+[REQUIRED] A backend job shall identify its work using this model, and the terms
 shall mean the following throughout its design, telemetry and state:
 
-- An **execution** is one logical run of a job: the thing that starts,
+- An **execution** is one logical run of a backend job: the thing that starts,
   does work, and reaches a terminal state. It is what an operator means
   by "the run that failed at 03:00".
 - A **work item** is an independently retryable subdivision of an
@@ -307,9 +307,9 @@ shall mean the following throughout its design, telemetry and state:
   may be attempted several times and remains the same execution or work
   item.
 
-A job shall distinguish the *thing* from the *try*: an execution retried
+A backend job shall distinguish the *thing* from the *try*: an execution retried
 three times is one execution with three attempts, not three executions.
-Not every pattern carries all three, and a job with no independently
+Not every pattern carries all three, and a backend job with no independently
 retryable parts has executions and attempts and no work items, which is
 not a gap to fill.
 
@@ -318,7 +318,7 @@ outcome, not the worker process.
 
 | Pattern | One execution is | Work items are |
 |---|---|---|
-| Simple Job | one run of the job | usually none — the execution is the unit |
+| Simple Job | one run of the backend job | usually none — the execution is the unit |
 | Batch / Parallel Job | one run over the whole collection | its partitions |
 | Orchestrated Workflow | one workflow instance | its activities |
 | Queued Worker | processing one message to a terminal outcome | usually none |
@@ -326,17 +326,17 @@ outcome, not the worker process.
 *Rationale:* Three identifiers appear in the requirements below and mean
 nothing without the relationship between them. Conflating the thing with
 the try makes it impossible to ask how many times something was tried,
-which is the first question asked of a job that produced a duplicate. And
+which is the first question asked of a backend job that produced a duplicate. And
 a Queued Worker runs indefinitely and is stopped rather than completed,
 so treating its process as the execution produces one identifier covering
 millions of unrelated pieces of work — which is the same as having none.
 
 ### 3.2 Give every logical execution a globally unique execution identifier.
 
-[REQUIRED] Every logical job execution shall have a globally unique
+[REQUIRED] Every logical backend job execution shall have a globally unique
 `executionId` that remains stable across retries of that execution and
 is propagated through logs, metrics, traces, child work, and externally
-visible job state. *Rationale:* One stable identity is the join key that
+visible backend job state. *Rationale:* One stable identity is the join key that
 lets operators and software reconstruct an execution across processes
 and attempts.
 
@@ -349,7 +349,7 @@ its parent execution. *Rationale:* Retry, deduplication, recovery, and
 item-level observability require an identity more precise than the
 parent execution. An identifier the execution platform already supplies
 — a partition index, a message identifier, an activity identifier —
-satisfies this, so a job that has work items need not mint a new one.
+satisfies this, so a backend job that has work items need not mint a new one.
 
 ### 3.4 Number execution attempts explicitly.
 
@@ -361,7 +361,7 @@ distinguish repeated execution from duplicate telemetry.
 
 ### 3.5 Propagate correlation and trace context across asynchronous boundaries.
 
-[REQUIRED] A job shall propagate the initiating correlation identifier
+[REQUIRED] A backend job shall propagate the initiating correlation identifier
 and distributed-trace context across queue, partition, workflow, and
 service boundaries when the underlying mechanism supports propagation.
 *Rationale:* Asynchronous boundaries otherwise break the causal chain
@@ -370,7 +370,7 @@ needed to diagnose how an initiating action became background work.
 ### 3.6 Persist input or an immutable reference to input before acknowledging initiation.
 
 [REQUIRED] When accepted work must survive process loss, the system
-shall durably persist the job input or an immutable reference sufficient
+shall durably persist the backend job input or an immutable reference sufficient
 to reconstruct it before acknowledging that initiation succeeded.
 *Rationale:* An acknowledgement creates an obligation to execute;
 accepting work that exists only in process memory can lose that
@@ -387,37 +387,37 @@ and operational escalation.
 ### 3.8 Distinguish execution deadline from downstream-operation timeout.
 
 [REQUIRED] Calls to downstream systems shall use timeouts shorter than
-the remaining execution deadline, leaving sufficient time for the job to
+the remaining execution deadline, leaving sufficient time for the backend job to
 handle failure, persist state, and terminate cleanly. *Rationale:* A
-dependency must not consume the entire job deadline and prevent
+dependency must not consume the entire backend job deadline and prevent
 controlled recovery.
 
 ### 3.9 Treat configuration as immutable for an attempt.
 
 [RECOMMENDED] Configuration should be resolved at attempt start and
-treated as immutable for that attempt, except for controls the job
+treated as immutable for that attempt, except for controls the backend job
 declares as dynamic, such as cancellation or throttling. *Rationale:* Mid-attempt configuration drift makes execution
 non-repeatable and complicates diagnosis.
 
 ## 4. State and Lifecycle
 
-### 4.1 Define one standard lifecycle for a job's executions.
+### 4.1 Define one standard lifecycle for a backend job's executions.
 
-[REQUIRED] A job whose executions are observable after initiation
+[REQUIRED] A backend job whose executions are observable after initiation
 shall define a single lifecycle that every one of its executions
 follows, exposing at least `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`,
 and `CANCELLED` semantics, whether or not the underlying implementation
 uses those exact storage values. *Rationale:* An administrative
-interface presents jobs at its top level and each job's executions
-beneath, so the states it renders are a property of the job rather than
-of a run. A lifecycle that varies between runs of the same job leaves
+interface presents backend jobs at its top level and each one's executions
+beneath, so the states it renders are a property of the backend job rather than
+of a run. A lifecycle that varies between runs of the same backend job leaves
 that interface with nothing to display at the level an operator works
-at, and one that varies between jobs makes every job a separate thing
+at, and one that varies between backend jobs makes each of them a separate thing
 to learn.
 
 ### 4.2 Treat success, failure, and cancellation as terminal states.
 
-[REQUIRED] A job's lifecycle shall classify `SUCCEEDED`, `FAILED`, and
+[REQUIRED] A backend job's lifecycle shall classify `SUCCEEDED`, `FAILED`, and
 `CANCELLED` as terminal for a logical execution, and `PENDING` and
 `RUNNING` as non-terminal; retrying terminal work shall create a new
 execution or an explicitly recorded replay linked to the original.
@@ -426,11 +426,11 @@ makes the meaning of completion unstable.
 
 ### 4.3 Recover to a known good state after losing the executing process.
 
-[REQUIRED] A job shall be able to recover from the loss of its executing
+[REQUIRED] A backend job shall be able to recover from the loss of its executing
 process without losing the record of work that has already reached a
 terminal outcome, and without repeating work that is not safe to repeat.
 *Rationale:* State that exists only in the executing process disappears
-with it, and a job that has committed partial results cannot recover
+with it, and a backend job that has committed partial results cannot recover
 unless it can still determine what it had done.
 
 ### 4.4 Record lifecycle timestamps.
@@ -450,19 +450,19 @@ personal data:
 | Category | Meaning |
 |---|---|
 | `INVALID_INPUT` | the work could not succeed as given, and retrying it unchanged will not help |
-| `NOT_AUTHORIZED` | the job's identity lacked a right the work required |
-| `DEPENDENCY_FAILURE` | a system the job called failed, refused, or was unreachable |
+| `NOT_AUTHORIZED` | the backend job's identity lacked a right the work required |
+| `DEPENDENCY_FAILURE` | a system the backend job called failed, refused, or was unreachable |
 | `TIMEOUT` | the execution or one of its calls exceeded its deadline |
 | `RETRY_EXHAUSTED` | a retryable failure recurred until the retry budget was spent |
 | `RESOURCE_EXHAUSTED` | capacity the execution needed was denied or reclaimed |
-| `DEFECT` | the job itself is wrong — an unhandled error or a violated invariant |
+| `DEFECT` | the backend job itself is wrong — an unhandled error or a violated invariant |
 
-Every failure shall map to one of these, and a failure the job cannot
+Every failure shall map to one of these, and a failure the backend job cannot
 otherwise classify is a `DEFECT`.
 
 *Rationale:* Operators and automation need to know why work stopped
-without parsing arbitrary log text, and a category each job words for
-itself cannot be queried across jobs or acted on by a common runbook.
+without parsing arbitrary log text, and a category each backend job words for
+itself cannot be queried across backend jobs or acted on by a common runbook.
 The categories divide by the response they call for: `INVALID_INPUT`
 needs the input changed, `DEPENDENCY_FAILURE` and `TIMEOUT` need the run
 repeated, `RESOURCE_EXHAUSTED` needs capacity, and `DEFECT` needs a code
@@ -481,7 +481,7 @@ believe they exclusively own the same work.
 
 ### 5.1 Assume at-least-once execution.
 
-[REQUIRED] Job implementations shall assume that any execution or work
+[REQUIRED] Backend job implementations shall assume that any execution or work
 item may execute more than once and shall preserve correctness under
 duplicate execution. *Rationale:* Redelivery, ambiguous acknowledgement,
 process termination, and operator replay make exactly-once execution an
@@ -497,11 +497,11 @@ enforced without a precise definition of what constitutes a duplicate.
 
 ### 5.3 Persist idempotency decisions durably.
 
-[REQUIRED] Where a duplicate would produce an effect the job has not
+[REQUIRED] Where a duplicate would produce an effect the backend job has not
 declared acceptable, the deduplication or idempotency record shall be
 persisted in a durable store whose lifetime covers the maximum retry and
 replay window. *Rationale:* In-memory duplicate detection disappears
-exactly when process recovery causes duplicate execution. A job that can
+exactly when process recovery causes duplicate execution. A backend job that can
 absorb duplicates needs no record at all; one that cannot needs a record
 that outlives the process.
 
@@ -543,7 +543,7 @@ than an input to one, and shall not be produced at a failure boundary.
 *Rationale:* Retry policy follows failure semantics rather than treating
 every exception identically, and one vocabulary for the retry decision
 and the recorded outcome means a failed execution's category already
-says whether it was retried. Retrying a failure the job itself caused,
+says whether it was retried. Retrying a failure the backend job itself caused,
 or one that only a grant change can fix, spends the retry budget with no
 prospect of success and delays the failure becoming visible.
 
@@ -577,7 +577,7 @@ infrastructure can react.
 
 [RECOMMENDED] Concurrency should be sized from measured work cost and
 the most restrictive downstream capacity or rate limit, then validated
-under representative load. *Rationale:* The safe concurrency of a job is
+under representative load. *Rationale:* The safe concurrency of a backend job is
 determined by the bottleneck it consumes, not by how many workers the
 compute platform can create.
 
@@ -587,7 +587,7 @@ compute platform can create.
 across multiple worker instances, that limit shall be enforced through a
 shared semaphore, queue dispatch control, partition ownership, platform
 concurrency control, or equivalent distributed mechanism rather than
-per-process counters. Whether such a mechanism is supplied to a job is a
+per-process counters. Whether such a mechanism is supplied to a backend job is a
 platform concern, not addressed here. *Rationale:* Per-instance limits do
 not enforce a global constraint after horizontal scaling — a limit of
 four per instance across five instances is a limit of twenty, and the
@@ -610,82 +610,82 @@ objective.
 
 ### 7.6 Order work only within the scope that requires ordering.
 
-[RECOMMENDED] Where some work must be processed in order, a job should
+[RECOMMENDED] Where some work must be processed in order, a backend job should
 apply that ordering only within the scope the business rule names — one
 customer, one account, one partition key — and should process different
 scopes concurrently. *Rationale:* Two updates to the same account must
 not be applied out of order; two updates to different accounts have no
 relationship to each other. Serializing the whole workload to protect
-the first case makes the job as slow as its single slowest item and buys
+the first case makes the backend job as slow as its single slowest item and buys
 nothing for the second.
 
 ## 8. Reconciliation
 
-### 8.1 Recognise when a job is reconciling, and apply this section to it.
+### 8.1 Recognise when a backend job is reconciling, and apply this section to it.
 
-[REQUIRED] A job whose purpose is to make one system agree with another
+[REQUIRED] A backend job whose purpose is to make one system agree with another
 shall be treated as reconciling and shall satisfy this section, whatever
 execution pattern it uses. A projection, a synchronisation, a mirror and
 a backfill that runs more than once are all reconciling. *Rationale:*
-Most scheduled jobs on a platform reconcile whether or not they were
-designed as such, and the rules below are the ones that keep a job from
-deleting what it was meant to protect. A job that is reconciling in
-substance and not recognised as such is exactly the job that fails that
+Most scheduled backend jobs on a platform reconcile whether or not they were
+designed as such, and the rules below are the ones that keep a backend job from
+deleting what it was meant to protect. A backend job that is reconciling in
+substance and not recognised as such is exactly the one that fails that
 way — the recognition is what pulls the rest of this section onto it.
 
-Reconciliation is not an execution pattern: it determines what a job
+Reconciliation is not an execution pattern: it determines what a backend job
 decides to do, where the patterns determine how work is decomposed and
 coordinated. The two compose, and the same reconciler may run as a
 Simple Job at small scale and as a Batch / Parallel Job or Queued Worker
-as its input grows without becoming a different kind of job.
+as its input grows without becoming a different kind of backend job.
 
 ### 8.2 Rederive desired state from its source on every run.
 
-[REQUIRED] A reconciling job shall compute desired state afresh from its source of truth each run,
+[REQUIRED] A reconciling backend job shall compute desired state afresh from its source of truth each run,
 and shall not treat a cached view, a previous run's output, or an incremental change feed as
-authoritative. *Rationale:* State derived once and carried forward drifts silently, and a job that
+authoritative. *Rationale:* State derived once and carried forward drifts silently, and a backend job that
 trusts its own history cannot repair the error it made last time — which is the one failure
 reconciliation exists to prevent.
 
 ### 8.3 Apply the difference, not the desired state.
 
-[REQUIRED] A reconciling job shall compare desired state against actual state and apply only the
+[REQUIRED] A reconciling backend job shall compare desired state against actual state and apply only the
 differences. *Rationale:* Writing everything each run makes the cost proportional to the estate
 rather than to the change, hides what actually moved in a log of unchanged writes, and turns a
 routine run into a large write burst against whatever it is reconciling
 into. This is an obligation rather than advice: the objection to
-requiring it is that a job unable to read its whole source cannot diff,
-and 8.6 and 8.7 remove that case by making such a job abort rather than
+requiring it is that a backend job unable to read its whole source cannot diff,
+and 8.6 and 8.7 remove that case by making such a backend job abort rather than
 reconcile — so there is no state in which the rule cannot be followed.
 
 ### 8.4 Converge on removal as deliberately as on addition.
 
-[REQUIRED] Where the source no longer holds a fact that the target does, the job shall remove it
+[REQUIRED] Where the source no longer holds a fact that the target does, the backend job shall remove it
 from the target. *Rationale:* Removal is the direction that
 is reliably wrong: additive reconciliation looks correct in every test and in normal operation,
 while access that should have been withdrawn quietly persists. A grant that arrives late is an
 inconvenience; one that never leaves is an incident.
 
-### 8.5 Define which facts the job owns before it removes anything.
+### 8.5 Define which facts the backend job owns before it removes anything.
 
-[REQUIRED] A reconciling job shall define the subset of the target it manages, and shall remove only
-facts within that subset. *Rationale:* A target is rarely written by one writer. A job that removes
+[REQUIRED] A reconciling backend job shall define the subset of the target it manages, and shall remove only
+facts within that subset. *Rationale:* A target is rarely written by one writer. A backend job that removes
 everything it did not put there will delete another writer's work on its first run, and the blast
-radius is the whole target rather than the job's own scope.
+radius is the whole target rather than the backend job's own scope.
 
 ### 8.6 Fail closed when the source cannot be read.
 
-[REQUIRED] A reconciling job shall distinguish a source that reports nothing from a source it could
+[REQUIRED] A reconciling backend job shall distinguish a source that reports nothing from a source it could
 not read, and shall abort the run rather than reconcile toward an empty or partial desired state.
 *Rationale:* This is the failure that destroys an estate. An unreadable source read as an empty one
-makes every managed fact a difference to be removed, and a job that is correct in every other
+makes every managed fact a difference to be removed, and a backend job that is correct in every other
 respect will faithfully delete everything it manages.
 
 ### 8.7 Treat an incomplete read as unreadable.
 
-[REQUIRED] Where desired state is assembled from several reads, or from a paginated one, a job shall
+[REQUIRED] Where desired state is assembled from several reads, or from a paginated one, a backend job shall
 treat the failure of any part as a failure of the whole. *Rationale:* A partial read is
-indistinguishable from a shrunken source, and 8.5's protection is lost if a job applies it only to
+indistinguishable from a shrunken source, and 8.5's protection is lost if a backend job applies it only to
 the first page.
 
 ### 8.8 Report counts of facts examined, added, removed and left unchanged.
@@ -697,14 +697,14 @@ reconciler reporting zero changes is the cheapest available proof that it conver
 
 ### 8.9 Make a second run a no-op.
 
-[REQUIRED] Running a reconciling job twice against an unchanged source shall produce no writes on
+[REQUIRED] Running a reconciling backend job twice against an unchanged source shall produce no writes on
 the second run. *Rationale:* Convergence is the property being claimed, and a second run that still
 writes is comparing the wrong thing — usually a representation difference mistaken for a
 difference in fact.
 
 ### 8.10 Pair a periodic full reconciliation with any incremental path.
 
-[RECOMMENDED] Where a job consumes an event or change feed so that it can react sooner than its
+[RECOMMENDED] Where a backend job consumes an event or change feed so that it can react sooner than its
 schedule alone would allow, it should keep running a full reconciliation on a schedule — less
 often than before, but not stop running one. *Rationale:* An
 incremental path is an optimisation and not a correctness mechanism: events are missed, dropped and
@@ -713,16 +713,16 @@ with only the incremental half has no way to discover what it missed.
 
 ### 8.11 Keep a run shorter than the interval between runs.
 
-[RECOMMENDED] A reconciling job's full run should complete well within the interval at which it is
-scheduled, and a job whose run time has grown to approach that interval should be changed rather
+[RECOMMENDED] A reconciling backend job's full run should complete well within the interval at which it is
+scheduled, and a backend job whose run time has grown to approach that interval should be changed rather
 than scheduled less often. *Rationale:* A run that does not finish before the next is due either
 overlaps it or blocks it, and scheduling less often to hide that leaves the target stale for
 longer. How to shorten the run — examining only what may have changed, partitioning, reducing what
 is reconciled — is a design choice; noticing that it must be shortened is not.
 
-### 8.12 Record when the job last reconciled successfully.
+### 8.12 Record when the backend job last reconciled successfully.
 
-[RECOMMENDED] A reconciling job should publish the time of its last successful full reconciliation.
+[RECOMMENDED] A reconciling backend job should publish the time of its last successful full reconciliation.
 *Rationale:* The question asked of a reconciler in an incident is how stale the target may be, and
 that is answerable from the last successful run rather than from the last run attempted.
 
@@ -731,7 +731,7 @@ that is answerable from the last successful run rather than from the last run at
 ### 9.1 Keep a Simple Job within one recoverable execution boundary.
 
 [RECOMMENDED] A Simple Job should execute as one bounded unit whose
-failure can be handled by retrying or restarting the whole job without
+failure can be handled by retrying or restarting the whole backend job without
 requiring durable coordination among internal steps. *Rationale:* If
 partial progress must be independently recovered, the workload has
 exceeded the defining simplicity of this pattern.
@@ -743,7 +743,7 @@ required side effects are durably committed. *Rationale:* Success must
 mean the work survived executor termination rather than merely that the
 code reached its final line.
 
-### 9.3 Prefer whole-job retry over custom checkpointing for small bounded work.
+### 9.3 Prefer retrying the whole backend job over custom checkpointing for small bounded work.
 
 [RECOMMENDED] A Simple Job should retry from its beginning rather than
 introduce checkpoints unless repeating successful work has become
@@ -757,7 +757,7 @@ justifies it.
 durable partition progress, or durable multi-step state should be
 redesigned using Queued Worker, Batch / Parallel Job, or Orchestrated
 Workflow rather than accumulating custom coordination code. *Rationale:*
-Pattern boundaries prevent a nominally simple job from becoming an
+Pattern boundaries prevent a nominally simple backend job from becoming an
 unrecognized workflow engine.
 
 ## 10. Queued Worker Implementation
@@ -769,7 +769,7 @@ shall remain available while work may arrive, and shall exit only in
 response to a shutdown signal. *Rationale:* This is what separates the
 pattern from a Simple Job, and the separation is not academic: a worker
 that exits when its queue is momentarily empty turns an idle period into
-a restart loop, and one treated as a Job by its deployment gets
+a restart loop, and one treated as a Kubernetes Job by its deployment gets
 completion semantics, backoff and retry limits that have no meaning for
 work that never finishes. The requirements below are consequences of
 running indefinitely, not of there being a queue.
@@ -976,16 +976,16 @@ termination rather than continue expanding the workload.
 
 ### 13.3 Define cancellation behavior for in-flight side effects.
 
-[RECOMMENDED] A job should define whether an in-flight operation
+[RECOMMENDED] A backend job should define whether an in-flight operation
 completes, is abandoned for retry, or is compensated when cancellation
 arrives. *Rationale:* Cancellation racing with side effects is
 unavoidable and requires deterministic semantics.
 
 ### 13.4 Authorize and audit every operational control.
 
-[REQUIRED] The following are the operational controls a job may expose.
+[REQUIRED] The following are the operational controls a backend job may expose.
 Each shall require authorization, and each use shall record the actor,
-the time, the target job or execution, the parameters given, and the
+the time, the target backend job or execution, the parameters given, and the
 outcome:
 
 | Control | Effect |
@@ -994,12 +994,12 @@ outcome:
 | `CANCEL` | stop an execution before it reaches a terminal state |
 | `RETRY` | run a failed execution again |
 | `REPLAY` | run a completed execution again |
-| `PAUSE` / `RESUME` | stop and restart the job taking new work |
-| `DISABLE` / `ENABLE` | stop and restart the job being scheduled at all |
+| `PAUSE` / `RESUME` | stop and restart the backend job taking new work |
+| `DISABLE` / `ENABLE` | stop and restart the backend job being scheduled at all |
 | `REDRIVE` | return dead-lettered work items for processing |
 | `DISCARD` | delete dead-lettered work items without processing them |
 
-No other control shall alter a job's execution or its work in a running
+No other control shall alter a backend job's execution or its work in a running
 environment.
 
 *Rationale:* Each of these repeats, prevents or destroys business
@@ -1011,7 +1011,7 @@ built the control.
 
 ## 14. Security and Data Handling
 
-### 14.1 Run each deployed job component with a dedicated workload identity.
+### 14.1 Run each deployed backend job component with a dedicated workload identity.
 
 [REQUIRED] Backend job components shall use non-human workload
 identities, and shall not use a developer's credentials or a credential
@@ -1019,27 +1019,27 @@ embedded in an image, manifest or configuration file. *Rationale:*
 Workload identity makes access attributable and independently revocable.
 
 A credential read at runtime from a secret store is not embedded, and is
-not forbidden here: a job that authenticates to a backend needs one, and
+not forbidden here: a backend job that authenticates to a backend needs one, and
 14.3 to 14.5 govern it. What is forbidden is a credential that travels
 with the code, because it cannot be rotated without a deployment and
 cannot be revoked without one either.
 
-### 14.2 Grant least privilege to job identities.
+### 14.2 Grant least privilege to backend job identities.
 
-[REQUIRED] A job identity shall receive only the resource and
-operation permissions required by that job component, with write and
+[REQUIRED] A backend job identity shall receive only the resource and
+operation permissions required by that backend job component, with write and
 administrative permissions separated where practical. *Rationale:*
-Background jobs can process large volumes unattended, magnifying the
+Backend jobs can process large volumes unattended, magnifying the
 impact of excessive privilege.
 
-### 14.3 Give every job its own credential for the backends it authenticates to.
+### 14.3 Give every backend job its own credential for the backends it authenticates to.
 
-[REQUIRED] Where a job authenticates to a backend service, it shall hold
-a credential issued to that job alone, distinct from and additional to
-its workload identity, and shall not share one with another job or with
-an application service. *Rationale:* A job normally carries two
+[REQUIRED] Where a backend job authenticates to a backend service, it shall hold
+a credential issued to that backend job alone, distinct from and additional to
+its workload identity, and shall not share one with another backend job or with
+an application service. *Rationale:* A backend job normally carries two
 identities — one to run as, one to call with — and only the first is
-covered by 14.1. A credential shared between two jobs makes them
+covered by 14.1. A credential shared between two backend jobs makes them
 indistinguishable in the backend's audit log, means revoking one revokes
 the other, and means rotating it for either breaks whichever was not
 expecting it.
@@ -1048,29 +1048,29 @@ expecting it.
 
 [REQUIRED] A credential's secret shall have exactly one authoritative
 store, and any other system holding a copy shall be converged onto it
-rather than written independently. The job shall read the secret at
+rather than written independently. The backend job shall read the secret at
 runtime from that store. *Rationale:* A secret written in two places
 diverges, and the divergence is silent until something fails to
 authenticate — by which time the two writers have long since disagreed.
 
-### 14.5 Manage a job's credential through the platform's own credential API.
+### 14.5 Manage a backend job's credential through the platform's own credential API.
 
-[REQUIRED] A job's credential shall be created, listed, rotated and
+[REQUIRED] A backend job's credential shall be created, listed, rotated and
 revoked through the same interface as every other credential the platform
 issues, and shall appear in the same inventory. *Rationale:* A credential
 provisioned by a mechanism of its own appears in no inventory, so nobody
 can answer what is able to authenticate as this platform — and the answer
-is the first thing wanted in an incident. It also means a job's
+is the first thing wanted in an incident. It also means a backend job's
 credential is revocable by an operator without a deployment, which is
 what makes 14.2's least privilege enforceable rather than aspirational.
 
-### 14.6 Keep secrets out of job inputs and telemetry.
+### 14.6 Keep secrets out of backend job inputs and telemetry.
 
 [REQUIRED] Reusable credentials, tokens, and secrets shall not be
-embedded in queue messages, batch manifests, workflow state, job
-definitions, logs, traces, or failure records; jobs shall resolve
+embedded in queue messages, batch manifests, workflow state, backend job
+definitions, logs, traces, or failure records; backend jobs shall resolve
 secrets through the approved secret-management mechanism. *Rationale:*
-Background-job artifacts are commonly persisted and replayed and
+Backend job artifacts are commonly persisted and replayed and
 therefore are unsafe secret stores.
 
 ### 14.7 Minimize sensitive data in durable coordination state.
@@ -1229,20 +1229,20 @@ shall normally run as a Kubernetes `Deployment`, not as one Kubernetes
 pod-creation overhead for each item and provides stable horizontal
 scaling, rolling deployment, and graceful draining.
 
-### 18.4 Process queue items with a worker pool rather than one Job per item.
+### 18.4 Process queue items with a worker pool rather than one Kubernetes Job per item.
 
-[RECOMMENDED] Where a job consumes a queue, its items should be
+[RECOMMENDED] Where a backend job consumes a queue, its items should be
 processed by long-running worker Pods that pull from that queue. A
 separate Kubernetes `Job` per item should be created only where an item
 needs process-level isolation, resources unlike those of other items, or
 a runtime long enough that start-up cost is negligible beside it.
-*Rationale:* A `Job` per item pays a Pod's full cost — scheduling, image
+*Rationale:* A Kubernetes `Job` per item pays a Pod's full cost — scheduling, image
 pull, container start, teardown — for every message, and leaves an API
 object behind for each. Where an item takes seconds, that overhead is
 most of the work done. A worker pool pays those costs once per worker
 instead of once per item.
 
-### 18.5 Use indexed or completion-based Jobs for Kubernetes-native parallel batch work.
+### 18.5 Use indexed or completion-based Kubernetes Jobs for Kubernetes-native parallel batch work.
 
 [OPTIONAL] A Batch / Parallel Job whose partitions can be
 represented as a fixed completion set should use Kubernetes Job
@@ -1304,20 +1304,20 @@ preserving an escape hatch for real requirements. *Example:*
 
 ## 19. Kubernetes Pod and Job Runtime Requirements
 
-### 19.1 Set resource requests for every job container.
+### 19.1 Set resource requests for every backend job container.
 
-[REQUIRED] Every job and worker container shall define CPU and memory
+[REQUIRED] Every backend job and worker container shall define CPU and memory
 `requests` based on measured or initially estimated normal consumption
 and shall be tuned from observed production behavior. *Rationale:*
 Kubernetes scheduling and cluster capacity planning depend on requests;
 omitting them makes placement and resource availability unpredictable.
 
-### 19.2 Set a memory limit for every job container.
+### 19.2 Set a memory limit for every backend job container.
 
-[REQUIRED] Every job and worker container shall define a memory
+[REQUIRED] Every backend job and worker container shall define a memory
 `limit` above its expected working set with sufficient headroom for
 normal peaks. *Rationale:* A bounded memory allocation prevents one
-faulty or unexpectedly large job from consuming unbounded node memory.
+faulty or unexpectedly large backend job from consuming unbounded node memory.
 
 ### 19.3 Use a CPU limit to contain a runaway process.
 
@@ -1330,7 +1330,7 @@ is not throttled. Where no runaway mode is plausible, the CPU request
 alone carries the workload's guaranteed share. *Rationale:* CPU is
 compressible: a container over its limit is throttled rather than
 killed, so the limit is not node protection in the way a memory limit
-is. It buys containment of one specific failure — a job that has begun
+is. It buys containment of one specific failure — a backend job that has begun
 to spin — at the cost of capping throughput, which is why it is set for
 that reason rather than by default.
 
@@ -1349,19 +1349,19 @@ application-level concurrency setting safe automatically.
 distinct execution attempt; `OnFailure` may be used only when in-Pod
 container restart semantics are explicitly desired and do not conflict
 with attempt accounting or retry ownership. *Rationale:* `restartPolicy` governs the container within a Pod, not the
-Job's retries: under `Never` the Job controller still creates a new Pod
+Kubernetes Job's retries: under `Never` the Kubernetes Job controller still creates a new Pod
 for each attempt, so retry is unaffected. What changes is that each
 attempt is a separate Pod with its own logs, rather than a container
 restarted in place over the top of the previous attempt's output. Hidden
 container restarts also obscure attempt identity and combine
-unexpectedly with Job-level and application-level retries.
+unexpectedly with Kubernetes Job-level and application-level retries.
 
-### 19.6 Set Job backoffLimit explicitly.
+### 19.6 Set Kubernetes Job backoffLimit explicitly.
 
 [REQUIRED] Every Kubernetes `Job` shall explicitly configure
 `backoffLimit` or the applicable per-index retry limit rather than rely
 on the platform default, and that value shall be counted within the
-job's total retry budget rather than added to it. *Rationale:* Kubernetes Job retries are
+backend job's total retry budget rather than added to it. *Rationale:* Kubernetes Job retries are
 part of the total retry budget and must not silently multiply
 application or dependency retries.
 
@@ -1370,21 +1370,21 @@ application or dependency retries.
 [REQUIRED] Every Kubernetes `Job` shall define `activeDeadlineSeconds`
 consistent with the maximum useful execution duration of the logical
 Kubernetes Job. *Rationale:* The controller needs a platform-level upper
-bound so hung or pathologically slow Jobs cannot consume resources
-indefinitely — and, for a scheduled Job, so that a stalled run releases
+bound so hung or pathologically slow Kubernetes Jobs cannot consume resources
+indefinitely — and, for a scheduled Kubernetes Job, so that a stalled run releases
 the schedule for its successor rather than holding it (20.11).
 
 ### 19.8 Use podFailurePolicy when Kubernetes-level failures require different treatment.
 
-[OPTIONAL] Jobs that can distinguish retryable infrastructure or
+[OPTIONAL] Kubernetes Jobs that can distinguish retryable infrastructure or
 disruption failures from deterministic container exit conditions should
 define `podFailurePolicy` so Kubernetes does not consume retry budget on
 failures known to be non-retryable or treats disruptions according to
-the intended policy. *Rationale:* Failure-aware Job control avoids
+the intended policy. *Rationale:* Failure-aware Kubernetes Job control avoids
 wasting retries and makes Kubernetes behavior align with the
 application's failure classification.
 
-### 19.9 Set completion and parallelism explicitly for parallel Jobs.
+### 19.9 Set completion and parallelism explicitly for parallel Kubernetes Jobs.
 
 [RECOMMENDED] Kubernetes Batch / Parallel Jobs should explicitly configure
 the required completion semantics and a bounded `parallelism`;
@@ -1402,14 +1402,14 @@ workload's overlap semantics; relying on the default is prohibited.
 schedule are not required. *Rationale:* Slow executions can otherwise
 create overlapping work without an explicit architecture decision.
 
-### 19.11 Ensure a scheduled job cannot prevent its own next run indefinitely.
+### 19.11 Ensure a scheduled backend job cannot prevent its own next run indefinitely.
 
 [REQUIRED] Where a `CronJob` sets `concurrencyPolicy: Forbid`, its
 `activeDeadlineSeconds` shall be set so that a stalled run terminates
 before the following scheduled start. *Rationale:* `backoffLimit` counts
 container failures and does not advance for a Pod that never starts a
 container — an image that cannot be pulled, a volume that cannot mount, a
-node that cannot schedule it. The Job remains active, `Forbid` then skips
+node that cannot schedule it. The Kubernetes Job remains active, `Forbid` then skips
 every subsequent start, and the schedule stops without failing — and the
 symptom is the absence of a run rather than the presence of a failure.
 
@@ -1430,10 +1430,10 @@ intentionally tied to a named local civil timezone. *Rationale:*
 Explicit timezone prevents schedule interpretation from depending on
 controller configuration and makes daylight-saving behavior intentional.
 
-### 19.14 Configure completed Job cleanup.
+### 19.14 Configure completed Kubernetes Job cleanup.
 
 [RECOMMENDED] Kubernetes Jobs should define `ttlSecondsAfterFinished`, and
-CronJobs should define successful and failed Job history limits,
+CronJobs should define successful and failed Kubernetes Job history limits,
 according to operational troubleshooting and audit needs. Durable
 business execution history should not depend on retaining Kubernetes Job
 objects indefinitely. *Rationale:* Kubernetes object history is useful
@@ -1441,7 +1441,7 @@ operationally but is not the system of record and should be bounded.
 
 ### 19.15 Handle SIGTERM and Kubernetes termination explicitly.
 
-[REQUIRED] Job and worker processes shall handle `SIGTERM`, stop
+[REQUIRED] Backend job and worker processes shall handle `SIGTERM`, stop
 acquiring new work, begin cooperative shutdown, and exit before
 `terminationGracePeriodSeconds` expires whenever safe completion is
 possible. *Rationale:* Kubernetes routinely terminates Pods during
@@ -1481,7 +1481,7 @@ checking does not kill healthy initialization. *Rationale:* Startup and
 runtime health are different conditions and should have different
 failure windows.
 
-### 19.20 Do not require readiness probes for non-serving bounded Jobs.
+### 19.20 Do not require readiness probes for non-serving bounded Kubernetes Jobs.
 
 [OPTIONAL] Kubernetes `Job` Pods that do not receive Service
 traffic generally should not define readiness probes; readiness is
@@ -1522,8 +1522,8 @@ processing timeliness.
 [OPTIONAL] Long-running worker pools with a required minimum
 processing capacity during voluntary disruptions should define a
 `PodDisruptionBudget`; bounded Kubernetes Jobs generally should rely on
-Job reconciliation rather than PDBs. *Rationale:* PDBs protect
-availability of continuous capacity, while Jobs are naturally recreated
+Kubernetes Job reconciliation rather than PDBs. *Rationale:* PDBs protect
+availability of continuous capacity, while Kubernetes Jobs are naturally recreated
 to reach completion.
 
 ### 20.5 Distribute critical worker replicas across failure domains.
@@ -1537,7 +1537,7 @@ boundary.
 
 ### 20.6 Use ephemeral storage deliberately.
 
-[RECOMMENDED] Jobs that use significant local scratch space should declare
+[RECOMMENDED] Backend jobs that use significant local scratch space should declare
 ephemeral-storage requests and limits and should not rely on
 container-local files for state required after Pod loss. *Rationale:*
 Local ephemeral storage is schedulable but disposable; exhausting it can
@@ -1547,17 +1547,17 @@ evict Pods and losing it is normal.
 
 [RECOMMENDED] Implementations should remain correct when Kubernetes
 replaces a Pod after node failure, eviction, OOM termination, failed
-liveness, deployment, or Job retry and the prior attempt's final outcome
+liveness, deployment, or Kubernetes Job retry and the prior attempt's final outcome
 is ambiguous. *Rationale:* Kubernetes reconciliation improves
 availability by replacing compute, but replacement cannot prove whether
 the prior attempt committed an external side effect.
 
-## 21. Alerting on Job Outcome
+## 21. Alerting on Backend Job Outcome
 
 ### 21.1 Raise an alert when an execution fails terminally.
 
 [REQUIRED] Where an execution reaches a failed terminal state with its
-retry budget spent, the job shall raise an alert carrying the execution
+retry budget spent, the backend job shall raise an alert carrying the execution
 identifier and the failure category. *Rationale:* A failure that is only
 recorded is a failure nobody has been told about, and background work
 has no user waiting on it to notice. The category is carried because it
@@ -1565,12 +1565,12 @@ decides who is woken: input and defect categories need the owning team,
 dependency and resource categories may need nobody at all once the
 dependency recovers.
 
-### 21.2 Raise an alert when a scheduled job does not run.
+### 21.2 Raise an alert when a scheduled backend job does not run.
 
-[REQUIRED] A scheduled job shall alert on the absence of a completed
+[REQUIRED] A scheduled backend job shall alert on the absence of a completed
 execution within its expected interval, and shall not depend only on
 alerts raised by a run that happens. *Rationale:* The failure that hides
-is the one that produces no event. A Job whose Pod never starts a
+is the one that produces no event. A Kubernetes Job whose Pod never starts a
 container, a schedule that has silently stopped, a run skipped because
 the previous one never terminated — none of these emit a failure,
 because nothing ran to emit one. An alert that fires only when something
@@ -1579,13 +1579,13 @@ obligation and not a consequence of 21.1.
 
 ### 21.3 Raise an alert when a reconciled target may be stale.
 
-[REQUIRED] Where a job reconciles, it shall alert when the time since
+[REQUIRED] Where a backend job reconciles, it shall alert when the time since
 its last successful full reconciliation exceeds a declared threshold.
-*Rationale:* 8.12 has the job publish that time, and a published value
+*Rationale:* 8.12 has the backend job publish that time, and a published value
 nobody watches answers no question. The threshold is declared rather
 than derived from the schedule because how stale a target may safely
 become is a property of what is being reconciled, not of how often the
-job was set to run.
+backend job was set to run.
 
 ------------------------------------------------------------------------
 
@@ -1596,7 +1596,7 @@ job was set to run.
 | **Backend Job** | Work executed outside the normal synchronous request-response path and managed as a distinct execution concern. |
 | **Execution Pattern** | The architecture governing how a backend job decomposes, coordinates, executes, and recovers its work. |
 | **Trigger** | The condition or mechanism that causes processing to begin; it is independent of the execution pattern. |
-| **Execution** | One logical run of a job: the thing that starts, does work, and reaches a terminal state, retaining one `executionId` across its attempts. |
+| **Execution** | One logical run of a backend job: the thing that starts, does work, and reaches a terminal state, retaining one `executionId` across its attempts. |
 | **Work Item** | An independently retryable subdivision of an execution — a partition, an activity, one message. |
 | **Attempt** | One try at an execution or a work item. |
 | **Simple Job** | A single bounded execution requiring no durable coordination between independently managed work items. |

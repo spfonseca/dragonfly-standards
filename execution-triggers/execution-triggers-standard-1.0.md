@@ -49,7 +49,7 @@ Applies to the mechanism that causes processing to begin.
 
 It stops where the processing does. How that work is decomposed, coordinated, retried and recovered
 is the Backend Job Design Standard's, and is selected independently of how the work arrived — a
-schedule and a queued message can start the same job.
+schedule and a queued message can start the same backend job.
 
 ## Status
 

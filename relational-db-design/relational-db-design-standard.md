@@ -370,7 +370,7 @@ never issued.
 [REQUIRED] The platform provides automated daily backups with point-in-time recovery enabled and
 7-day retention on the shared instance — the required floor values, configurable upward per
 platform instantiation. Services shall not hand-roll their own backup tooling. *Rationale:* One
-tested platform mechanism beats one improvised job per service, and fixed floor values make
+tested platform mechanism beats one improvised backup job per service, and fixed floor values make
 recovery a property of the platform rather than a per-team hope.
 
 ### 12.2 Declare recovery objectives and verify restore.

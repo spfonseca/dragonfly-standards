@@ -47,7 +47,7 @@ stop calling a dependency altogether.
 ## Scope
 
 Applies to any software that calls something it does not control — a synchronous request handler
-calling a service, a background job calling an API, a client calling a database.
+calling a service, a backend job calling an API, a client calling a database.
 
 It does not cover what a caller does with a failure once it has stopped retrying: recording the
 outcome, preserving the work, or reporting it. Those are concerns of the calling workload and are
@@ -57,13 +57,13 @@ not addressed here.
 
 **This is a holding place, not a finished standard.** Its guidelines were moved verbatim from the
 Backend Job Design Standard (BJOBS v1.0 §6.2, §6.4, §6.5, §6.6, §6.8 and §7.5), where they had
-been written as job requirements although none of them is specific to a job — any caller of any
+been written as backend job requirements although none of them is specific to a backend job — any caller of any
 dependency owes the same behaviour. They are renumbered here; further sections and additions are
 later work.
 
 Two things to settle when this is edited properly:
 
-- Several still say "the job" or "workers". That wording is a leftover, not a scoping decision.
+- Several still say "the backend job" or "workers". That wording is a leftover, not a scoping decision.
 - Retry presumes a classification of failures into those worth retrying and those that are not.
   The standard they came from classifies against its own set of failure categories; this one will
   need to say what it classifies against, or the retry requirements rest on a term it never
@@ -92,7 +92,7 @@ retry policy into a dependency outage amplifier.
 ### 1.3 Honor dependency throttling signals.
 
 [REQUIRED] When a downstream dependency communicates a retry delay or
-rate-limit reset, the job shall honor that signal within its remaining
+rate-limit reset, the backend job shall honor that signal within its remaining
 execution deadline rather than retry sooner. *Rationale:* Ignoring
 explicit throttling instructions increases failure duration and may
 cause further rejection.
@@ -109,7 +109,7 @@ succeed and only obscures the actionable failure.
 
 ### 2.1 Apply circuit breaking or equivalent dependency protection to repeated remote failures.
 
-[RECOMMENDED] Jobs making sustained calls to a failing remote
+[RECOMMENDED] Backend jobs making sustained calls to a failing remote
 dependency should use circuit breaking, adaptive concurrency, or
 equivalent protection where repeated attempts would materially increase
 load or latency. *Rationale:* Failure protection prevents large worker
