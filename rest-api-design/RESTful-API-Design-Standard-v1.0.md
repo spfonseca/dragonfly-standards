@@ -248,7 +248,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 5.1 Tolerate retries and duplicate delivery.
 
-[REQUIRED] All APIs shall tolerate retries and duplicate delivery (at-least-once semantics), whether through natural idempotency or idempotency keys (§10.20). *Rationale:* Networks redeliver; an operation that corrupts state on a second delivery fails exactly when the infrastructure is doing its job.
+[REQUIRED] All APIs shall tolerate retries and duplicate delivery (at-least-once semantics), whether through natural idempotency or idempotency keys (§10.20). *Rationale:* Networks redeliver; an operation that corrupts state on a second delivery fails exactly when the infrastructure is working as designed.
 
 ### 5.2 Prohibit client affinity.
 
@@ -276,7 +276,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 5.8 Offer short operations synchronously and long-running operations asynchronously.
 
-[REQUIRED] APIs shall answer synchronous requests within short, predictable response times; any operation that cannot shall be offered asynchronously via the job pattern (§14). *Rationale:* Long synchronous calls hold connections open, invite client timeouts, and hide progress that a job resource would expose.
+[REQUIRED] APIs shall answer synchronous requests within short, predictable response times; any operation that cannot shall be offered asynchronously via the operation job pattern (§14). *Rationale:* Long synchronous calls hold connections open, invite client timeouts, and hide progress that an operation job resource — a resource that tracks one asynchronous operation — would expose.
 
 ## 6. Versioning
 
@@ -781,11 +781,11 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 14.3 Asynchronous operations — initiation: return 202 Accepted and track progress on the resource itself.
 
-[REQUIRED] Initiation returns 202 Accepted (§12.4) with the resource representation carrying its status; the resource being operated on is the tracking object. An explicit job resource is defined only when the operation has no natural resource (e.g. bulk import, recomputation), and then follows all normal resource conventions. *Rationale:* Tracking on the natural resource avoids a parallel job catalog for every operation.
+[REQUIRED] Initiation returns 202 Accepted (§12.4) with the resource representation carrying its status; the resource being operated on is the tracking object. An explicit operation job resource is defined only when the operation has no natural resource (e.g. bulk import, recomputation), and then follows all normal resource conventions. *Rationale:* Tracking on the natural resource avoids a parallel operation job catalog for every operation.
 
-### 14.4 Asynchronous operations — status: use the standard vocabulary on job resources.
+### 14.4 Asynchronous operations — status: use the standard vocabulary on operation job resources.
 
-[REQUIRED] Where an explicit job resource tracks the operation (§14.3), its status is a closed vocabulary — PENDING, RUNNING, SUCCEEDED, FAILED, CANCELED (§16.4) — with created, started, and finished timestamps (§16.3); a FAILED status carries the standard error body (§12.17), and the GET reading it returns 200. Processing progress shall never be encoded in a resource's business state machine (§7.10): where the resource itself is the tracking object, in-flight processing is signaled by Retry-After on its GET responses (§14.5). *Rationale:* A resource's state is a business construct; processing is not, so it travels as metadata rather than distorting the domain model.
+[REQUIRED] Where an explicit operation job resource tracks the operation (§14.3), its status is a closed vocabulary — PENDING, RUNNING, SUCCEEDED, FAILED, CANCELED (§16.4) — with created, started, and finished timestamps (§16.3); a FAILED status carries the standard error body (§12.17), and the GET reading it returns 200. Processing progress shall never be encoded in a resource's business state machine (§7.10): where the resource itself is the tracking object, in-flight processing is signaled by Retry-After on its GET responses (§14.5). *Rationale:* A resource's state is a business construct; processing is not, so it travels as metadata rather than distorting the domain model.
 
 ### 14.5 Asynchronous operations — polling: make all produced state retrievable by GET at any time.
 

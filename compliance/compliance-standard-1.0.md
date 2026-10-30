@@ -5,7 +5,7 @@ description: >-
   when it ends — classification, retention, deletion, and the record that survives it — including
   data held incidentally, such as operational state, queues, logs, caches and recovery stores.
 adoptionMetrics:
-  - Share of job state and failed-work stores with a declared retention period
+  - Share of backend job state and failed-work stores with a declared retention period
 impactMetrics:
   - Volume of operational state held beyond its declared retention period
 tags: [compliance, data-retention, data-classification, deletion, privacy]
@@ -51,8 +51,8 @@ how those inputs become a declared period and how the period is enforced.
 
 **This is a holding place, not a finished standard.** Its one guideline was moved verbatim from the
 Backend Job Design Standard (BJOBS v1.0 §16.8, as numbered before that standard's renumbering), where
-it had been written as a job requirement although the obligation is not a job's: how long data may
-be kept is settled by classification and audit policy, and a job merely inherits the answer. It is
+it had been written as a backend job requirement although the obligation is not a backend job's: how long data may
+be kept is settled by classification and audit policy, and a backend job merely inherits the answer. It is
 renumbered here; further sections and additions are later work.
 
 What this standard needs before it is usable is the part the moved guideline assumes and does not
@@ -61,7 +61,7 @@ period. Without those, "derived from data-classification policy" points at nothi
 
 ## 1. Retention
 
-### 1.1 Apply retention to job state and failed-work stores.
+### 1.1 Apply retention to backend job state and failed-work stores.
 
 [RECOMMENDED] Execution history, idempotency records, dead-letter data,
 checkpoints, and workflow history should have retention periods derived

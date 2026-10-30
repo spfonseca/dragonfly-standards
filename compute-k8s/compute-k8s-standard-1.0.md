@@ -51,7 +51,7 @@ image is named, and how its manifests are delivered.
 Applies to every workload the platform runs on Kubernetes.
 
 It does not cover what a workload does or how its work is decomposed. A backend job's execution
-pattern, its correctness rules and its job-specific Kubernetes mechanics — `restartPolicy`,
+pattern, its correctness rules and its Kubernetes mechanics specific to backend jobs — `restartPolicy`,
 `backoffLimit`, `activeDeadlineSeconds`, `concurrencyPolicy` and the rest — are the Backend Job
 Design Standard's, and have no analogue in a workload that serves requests.
 
@@ -59,7 +59,7 @@ Design Standard's, and have no analogue in a workload that serves requests.
 
 **This is a holding place, not a finished standard.** Its guidelines were moved verbatim from the
 Backend Job Design Standard (BJOBS v1.0 §21.21, §21.22, §22.1–§22.7 and §22.18–§22.20, as numbered
-before that standard's renumbering), where they had been written as job requirements although every
+before that standard's renumbering), where they had been written as backend job requirements although every
 one of them is identical for a service Deployment. They are renumbered here; further sections and
 additions are later work.
 
@@ -74,26 +74,26 @@ whatever a module cannot decide on a workload's behalf.
 
 ### 1.1 Pin deployable images to an immutable application version.
 
-[REQUIRED] Production job and worker manifests shall reference an
+[REQUIRED] Production backend job and worker manifests shall reference an
 immutable image version, preferably by digest or by an organizationally
 guaranteed immutable tag; mutable tags such as `latest` are prohibited.
 *Rationale:* Retries and later-created Pods must not silently execute
 different code under the same declared deployment version.
 
-### 1.2 Use one primary application container per job Pod by default.
+### 1.2 Use one primary application container per backend job Pod by default.
 
-[RECOMMENDED] A job Pod should contain one primary work-performing
+[RECOMMENDED] A backend job Pod should contain one primary work-performing
 container; sidecars shall be introduced only for a platform capability
 that cannot be provided externally or through native Kubernetes
-facilities, and their termination behavior shall be validated for Job
+facilities, and their termination behavior shall be validated for Kubernetes Job
 completion. *Rationale:* Sidecars add lifecycle coupling and can prevent
-or delay run-to-completion semantics when not designed for Jobs.
+or delay run-to-completion semantics when not designed for Kubernetes Jobs.
 
 ## 2. Workload Identity
 
-### 2.1 Use a dedicated Kubernetes ServiceAccount per deployed job component.
+### 2.1 Use a dedicated Kubernetes ServiceAccount per deployed backend job component.
 
-[REQUIRED] Each independently deployed job or worker component shall
+[REQUIRED] Each independently deployed backend job or worker component shall
 use a dedicated Kubernetes `ServiceAccount` mapped to the approved
 workload identity rather than the namespace default ServiceAccount.
 *Rationale:* Component-specific identity enables least privilege and
@@ -101,17 +101,17 @@ isolates compromise.
 
 ### 2.2 Disable automatic ServiceAccount token mounting unless the workload calls the Kubernetes API.
 
-[REQUIRED] Set `automountServiceAccountToken: false` for job Pods that
+[REQUIRED] Set `automountServiceAccountToken: false` for backend job Pods that
 do not need to call the Kubernetes API; enable token mounting only when
 Kubernetes API access is an explicit workload requirement. *Rationale:*
-Most application jobs need cloud or application identity, not Kubernetes
+Most application backend jobs need cloud or application identity, not Kubernetes
 API credentials, so an unused token is unnecessary attack surface.
 
 ## 3. Workload Security
 
 ### 3.1 Run containers as non-root.
 
-[REQUIRED] Job and worker containers shall run as a non-root user and
+[REQUIRED] Backend job and worker containers shall run as a non-root user and
 shall set `allowPrivilegeEscalation: false` unless a reviewed platform
 requirement makes that impossible. *Rationale:* Background processing
 normally requires no host-level privilege, and removing it reduces the
@@ -119,7 +119,7 @@ impact of container compromise.
 
 ### 3.2 Use the runtime-default seccomp profile.
 
-[REQUIRED] Linux job and worker Pods shall use the `RuntimeDefault`
+[REQUIRED] Linux backend job and worker Pods shall use the `RuntimeDefault`
 seccomp profile unless an approved exception requires a different
 profile. *Rationale:* The runtime-default syscall filter provides
 baseline process isolation without requiring application-specific policy
@@ -133,7 +133,7 @@ runtime writes are required. *Rationale:* A read-only application
 filesystem reduces mutation opportunities and makes writable state
 intentional.
 
-### 3.4 Do not use privileged containers or host namespaces for application jobs.
+### 3.4 Do not use privileged containers or host namespaces for application backend jobs.
 
 [REQUIRED] Application backend jobs shall not use privileged
 containers, `hostNetwork`, `hostPID`, `hostIPC`, or host-path mounts
@@ -172,7 +172,7 @@ admission rather than discovered during an incident.
 
 ### 4.3 Use namespace and workload labels consistently.
 
-[REQUIRED] Job workloads shall carry the organization's standard
+[REQUIRED] Backend job workloads shall carry the organization's standard
 ownership, application, environment, component, and observability labels
 so policy, cost, telemetry, and operations can identify them
 consistently. *Rationale:* Kubernetes automation depends heavily on

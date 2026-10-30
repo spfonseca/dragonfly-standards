@@ -54,9 +54,9 @@ deliberately, because they are the ones that are never met until production.
 
 **This is a holding place, not a finished standard.** Its guidelines were moved verbatim from the
 Backend Job Design Standard (BJOBS v1.0 §18.1–§18.6, §18.9, §22.21 and §22.22, as numbered before
-that standard's renumbering), where they had been written as job requirements although almost none
-of them is specific to a job — any workload that can be killed mid-write, retried, or run twice owes
-the same proofs. Two requirements that name a job pattern directly, checkpoint restart for batch
+that standard's renumbering), where they had been written as backend job requirements although almost none
+of them is specific to a backend job — any workload that can be killed mid-write, retried, or run twice owes
+the same proofs. Two requirements that name a backend job pattern directly, checkpoint restart for batch
 work and workflow replay compatibility, stayed behind with the pattern they belong to. They are
 renumbered here; further sections and additions are later work.
 
@@ -84,7 +84,7 @@ expose the race conditions idempotency controls exist to prevent.
 
 ### 2.1 Test process termination at commit boundaries.
 
-[REQUIRED] Durable job patterns shall be tested with process
+[REQUIRED] Durable backend job patterns shall be tested with process
 termination before and after significant state commits,
 acknowledgements, checkpoints, and side effects. *Rationale:*
 Crash-window testing verifies that the ordering of persistence and
@@ -114,9 +114,9 @@ infrastructure termination must be proven safe before production.
 
 ## 3. Reconciliation
 
-### 3.1 Test that a reconciling job removes what its source no longer holds.
+### 3.1 Test that a reconciling backend job removes what its source no longer holds.
 
-[REQUIRED] Where a job's purpose is to make one system agree with
+[REQUIRED] Where a backend job's purpose is to make one system agree with
 another, a test shall run it against a source that no longer holds a
 fact the target does, and shall assert the target no longer holds it
 afterwards. *Rationale:* An additive reconciler passes every other test
@@ -130,7 +130,7 @@ place.
 ### 4.1 Test Kubernetes termination and retry behavior in a real cluster environment.
 
 [REQUIRED] Pre-production verification shall include representative
-Pod deletion, Job failure/retry, worker rollout, and forced termination
+Pod deletion, Kubernetes Job failure/retry, worker rollout, and forced termination
 scenarios in Kubernetes rather than relying solely on local process
 tests. *Rationale:* Controller reconciliation, signals, leases,
 scheduling, and termination timing are platform behaviors that unit
@@ -138,7 +138,7 @@ tests cannot reproduce.
 
 ### 4.2 Load-test the configured concurrency envelope.
 
-[RECOMMENDED] Jobs using significant concurrency should be tested at
+[RECOMMENDED] Backend jobs using significant concurrency should be tested at
 and above the intended concurrency limit against realistic dependency
 constraints and work-item cost. *Rationale:* Safe concurrency is an
 empirical capacity property, not just a configuration value.

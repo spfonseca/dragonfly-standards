@@ -56,25 +56,25 @@ infrastructure decisions; this standard is what a workload owes them.
 
 **This is a holding place, not a finished standard.** Its guidelines were moved verbatim from the
 Backend Job Design Standard (BJOBS v1.0 §15.1–§15.8 and §22.15–§22.17, as numbered before that
-standard's renumbering), where they had been written as job requirements although almost none of
-them is specific to a job — a service serving requests owes the same structured context, the same
+standard's renumbering), where they had been written as backend job requirements although almost none of
+them is specific to a backend job — a service serving requests owes the same structured context, the same
 outcome metrics, the same trace propagation and the same restraint about high-cardinality
 dimensions. They are renumbered here; further sections and additions are later work.
 
 ## 1. Logs and Traces
 
-### 1.1 Emit structured logs with standard job context.
+### 1.1 Emit structured logs with standard backend job context.
 
-[REQUIRED] Job logs shall be structured and shall include, where
+[REQUIRED] Backend job logs shall be structured and shall include, where
 applicable, `executionId`, `workItemId` or partition/activity identity,
 `attemptNumber`, execution pattern, lifecycle state, correlation
 identifier, and trace identifiers. *Rationale:* Consistent fields make
 background execution searchable and machine-correlatable across
 implementations.
 
-### 1.2 Trace downstream calls from the job execution.
+### 1.2 Trace downstream calls from the backend job execution.
 
-[RECOMMENDED] Jobs should create or continue distributed traces for
+[RECOMMENDED] Backend jobs should create or continue distributed traces for
 significant processing and downstream calls, preserving links when
 strict parent-child trace structure cannot cross asynchronous fan-out.
 *Rationale:* Tracing reveals where execution time and failures occur
@@ -92,7 +92,7 @@ concrete Kubernetes runtime that processed it.
 
 ### 2.1 Emit execution outcome metrics.
 
-[REQUIRED] Jobs shall emit metrics for executions or work units
+[REQUIRED] Backend jobs shall emit metrics for executions or work units
 started, succeeded, failed, cancelled, retried, and terminally exhausted
 as applicable. *Rationale:* Outcome rates reveal reliability degradation
 that individual logs cannot summarize.
@@ -139,20 +139,20 @@ does not advance `backoffLimit`, stays active, and with
 so there is no failed run to alert on, and an alert watching for errors
 sees none. Found live: a platform reconciler did not run for five hours
 and the symptom was the absence of an event rather than the presence of
-one. This is what notices when a scheduled job cannot start its next run.
+one. This is what notices when a scheduled backend job cannot start its next run.
 
 ### 3.3 Monitor Kubernetes failure modes separately from business failures.
 
-[REQUIRED] Operational monitoring shall distinguish application/job
+[REQUIRED] Operational monitoring shall distinguish application and backend job
 failures from Kubernetes scheduling failures, image-pull failures, OOM
 kills, evictions, repeated container restarts, unschedulable Pods, and
-Job-controller retry exhaustion. *Rationale:* Infrastructure and
+Kubernetes Job-controller retry exhaustion. *Rationale:* Infrastructure and
 business failures require different remediation and should not collapse
-into one generic failed-job signal.
+into one generic signal of a failed backend job.
 
-### 3.4 Alert on unschedulable or capacity-starved job work.
+### 3.4 Alert on unschedulable or capacity-starved backend job work.
 
-[REQUIRED] Production monitoring shall detect when Jobs or worker Pods
+[REQUIRED] Production monitoring shall detect when Kubernetes Jobs or worker Pods
 remain Pending because of insufficient cluster capacity, resource
 constraints, affinity rules, quota, or other scheduling failures.
 *Rationale:* A perfectly healthy application still fails its timeliness

@@ -55,7 +55,7 @@ the core platform's eventing requirements. This standard is what a service owes 
 infrastructure, and is written after it settles.
 
 Its two guidelines were moved verbatim from the Backend Job Design Standard (BJOBS v1.0 §7.2 and
-§7.3), where they had been written as job requirements although neither is specific to a job: the
+§7.3), where they had been written as backend job requirements although neither is specific to a backend job: the
 first binds any service that publishes a message alongside a database write, the second any service
 that consumes one. They are renumbered here; the envelope, type versioning, delivery and ordering
 assumptions and further additions are later work.
@@ -66,7 +66,7 @@ assumptions and further additions are later work.
 
 [REQUIRED] When correctness requires a local database change and
 publication of a message or event to either both occur eventually or
-neither be lost, the job shall use a transactional outbox or an
+neither be lost, the backend job shall use a transactional outbox or an
 equivalent atomic persistence mechanism. *Rationale:* Writing the
 database and publishing separately creates a crash window in which one
 succeeds and the other is permanently lost.
