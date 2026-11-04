@@ -206,10 +206,13 @@ alone — the organization scopes the query, a fact decides whether the caller m
 
 ### 5.3 Never grant cross-organization access through membership in the other organization.
 
-[REQUIRED] Cross-organization access is never membership in the other organization. It is a direct
-relation on the specific object, or a platform-level grant (§7).
+[REQUIRED] Cross-organization access is never membership in the other organization. It is guest
+standing in that organization, exercised from a session acting in it, together with a direct
+relation on the specific object; or a platform-level grant (§7). A session acts in one organization
+at a time, and no read reaches another organization's objects from it.
 
-*Rationale:* Membership is belonging; a share is a fact about one thing.
+*Rationale:* Membership is belonging; a share is a fact about one thing; and an operation that sees
+one organization at a time cannot combine two tenants' data.
 
 ### 5.4 Draft placeholder: publication.
 
