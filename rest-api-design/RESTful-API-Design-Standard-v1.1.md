@@ -845,7 +845,8 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
               | "startswith" "(" <field> "," <string> ")"
 <operator>   := "eq" | "ne" | "gt" | "ge" | "lt" | "le"
 <field>      := a query parameter the API exposes for individual pass-in
-<value>      := <string> | <number> | <date-time>   (dates per ISO 8601, §16.3)
+<value>      := <string> | <number> | <boolean> | <date-time>   (dates per ISO 8601, §16.3)
+<boolean>    := "true" | "false"   (bare, never quoted — a boolean field refuses 'true')
 ```
 
 *Examples:*
@@ -857,6 +858,7 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 | `?q=status in ('OPEN','PENDING')` | Membership in a bounded list |
 | `?q=location eq 'Petaluma' and (age lt 30 or status eq 'OPEN')` | Cross-field OR with grouping |
 | `?q=startswith(lastName, 'Fon') and closedDate eq null` | Prefix match and null check |
+| `?q=enabled eq true and locked ne false` | Boolean fields, bare literals |
 | `?q=metadata.organizationId eq 'b3f1c2a0-4e5d-4a1b-9c8e-7d6f5a4b3c2d'` | One-level dotted field on the metadata block (§11.1) |
 
 ### 15.6 Order results through the sort parameter.
