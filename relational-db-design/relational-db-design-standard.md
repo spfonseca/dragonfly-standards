@@ -223,15 +223,17 @@ constraints guard every path, including the ones not written yet.
 
 [REQUIRED] Tables holding tenant-owned data carry the owning organization's ID (`organization_id`,
 mapping to the API's metadata organizationId, §7.9) as a foreign-keyed column, and every query is
-constrained to the rows the platform authorization engine grants the caller — usually the caller's
-organization, plus anything legitimately shared across organizations. `organization_id` is
-assigned by the application at creation from the creating user's organization, **never from client
-input, and is immutable thereafter** (RESTful API Design Standard §13.7): the organization owns the
-row through the member who created it, but that ownership neither is client-settable nor follows
-the user out of the organization. *Rationale:* The organization column is what authorization
-decisions are applied against, so it must be trustworthy — server-stamped and immovable, not
-something a caller can supply or a later edit can change to escape its tenant; the engine remains
-the single authority on cross-organization access.
+constrained to the session's acting organization — the token's `org_id` — and, within it, to the
+rows the platform authorization engine grants the caller. Content the platform broadcasts is the
+one exception, readable outside its owning organization. `organization_id` is assigned by the
+application at creation from the acting organization, **never from client input, and is immutable
+thereafter** (RESTful API Design Standard §13.7). The creator may be a member or a guest acting in
+the organization; the organization owns the row either way, and that ownership neither is
+client-settable nor follows the creator out of the organization. *Rationale:* The organization
+column is what authorization decisions are applied against, so it must be trustworthy —
+server-stamped and immovable, not something a caller can supply or a later edit can change to escape
+its tenant — and scoping every query to one organization is what keeps any operation from combining
+two tenants' data.
 
 ## 7. Indexing
 
