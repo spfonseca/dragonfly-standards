@@ -863,6 +863,31 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 
 [RECOMMENDED] Ordering is expressed via sort with syntax `[-]FieldName{"|"[-]FieldName}`, where each field shall be a query parameter the API exposes for individual pass-in (the same field set available to q, §15.5), a leading `-` means descending, and left-to-right order sets precedence. *Rationale:* A compact, uniform sort grammar covers multi-key ordering without bespoke parameters. *Example:* `?sort=-age|lastName` orders by age descending, then last name ascending.
 
+### 15.9 Answer grouped counts through the groupBy parameter.
+
+[REQUIRED] Every collection shall answer with counts per group instead of its elements when requested via groupBy with syntax `<field>[":"<period>]{"|"<field>[":"<period>]}`. Each field shall be one the API exposes to q (§15.5), and shall be an enumeration (§16.4), an identifier (§16.7), a country code (§16.8), or a date; a date field shall name the period it is grouped by, one of `day`, `week`, `month`, `quarter` or `year`, and no other field shall name one. At most two fields may be named. Where sum names a numeric field the API exposes to q, each group carries that field's total in place of its count, in the field's own representation (§16.4). The grouping applies to exactly the elements the request would otherwise return — after q, and only those the caller is authorized to read (§13.3) — so a count can never disclose an element its caller could not open. Every collection shall therefore also support q (§15.5). A request naming more than two fields, a field not exposed to q, a period on a non-date field or a date field without one is rejected with 400. *Rationale:* A chart over a collection needs counts per state, per owner or per month, and counting in the client is correct over one page and quietly wrong over the rest; a parameter on the collection reuses its filter and its authorization rather than duplicating both in a separate reporting endpoint, and binding the grouped fields to those already exposed to q keeps every grouping as cheap as the filter it follows.
+
+The response is the collection envelope (§15.1) with a groups attribute in place of items. Each group carries a key holding the value of each grouped field — omitted where the elements have none (§16.6) — and its count or sum. Groups are ordered by key unless sort names `count` or `sum`; page and pageSize page the groups, and Example-Result-Set-Count (§15.4) carries the number of groups. *Examples:*
+
+| Query | Meaning |
+|---|---|
+| `?groupBy=state` | Elements per lifecycle state |
+| `?groupBy=likelihood\|impact&q=registerId eq '7c9e6679-7425-40de-944b-e07fc1f90ae7'` | One register's risks on a likelihood × impact grid |
+| `?groupBy=createdAt:month&q=createdAt ge '2025-11-01T00:00:00Z'` | Elements created per month over the last year |
+| `?groupBy=ownerId&sort=-count&pageSize=10` | The ten owners with the most elements |
+| `?groupBy=country&sum=headcount` | Total headcount per country |
+
+```json
+{
+  "_links": { "self": { "href": "https://api.example.com/v1/risks?groupBy=likelihood|impact" } },
+  "groups": [
+    { "key": { "likelihood": "RARE", "impact": "MINOR" }, "count": 3 },
+    { "key": { "likelihood": "RARE", "impact": "MAJOR" }, "count": 1 },
+    { "key": { "impact": "MINOR" }, "count": 2 }
+  ]
+}
+```
+
 
 ## 16. Data Formats & Types
 
