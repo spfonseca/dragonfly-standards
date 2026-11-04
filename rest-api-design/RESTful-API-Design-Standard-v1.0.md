@@ -879,6 +879,22 @@ Expressions are bounded in three ways. Nesting shall not exceed 3 levels of pare
 
 [RECOMMENDED] Ordering is expressed via sort with syntax `[-]FieldName{"|"[-]FieldName}`, where each field shall be a query parameter the API exposes for individual pass-in (the same field set available to q, §15.5), a leading `-` means descending, and left-to-right order sets precedence. *Rationale:* A compact, uniform sort grammar covers multi-key ordering without bespoke parameters. *Example:* `?sort=-age|lastName` orders by age descending, then last name ascending.
 
+### 15.7 A replace of a whole set shall carry across the server-owned fields of unchanged members.
+
+[REQUIRED] Where a PUT replaces a nested set whole, each member that is unchanged shall keep its
+server-owned values; only a member whose client-owned fields change shall have them recomputed.
+*Rationale:* a replace rebuilds every member, so a field such as "when this was last decided" is
+otherwise stamped afresh on every save, and the one question it exists to answer is lost the first
+time anything else in the set changes. Observed 2026-10-05 in the AI service, where an
+organization's stance on a model carries when it was taken.
+
+### 15.8 Server-owned members of a representation shall be refused on write, not ignored.
+
+[REQUIRED] A write that supplies a server-owned member shall be refused with a validation error
+naming it. *Rationale:* silently discarding it leaves a caller believing they set something they did
+not. The cost is that a read-modify-write must strip what it just read, which is the correct trade:
+a caller that cannot see which fields are theirs will get it wrong in both directions.
+
 ### 15.9 Answer grouped counts through the groupBy parameter.
 
 [REQUIRED] Every collection shall answer with counts per group instead of its elements when requested via groupBy with syntax `<field>[":"<period>]{"|"<field>[":"<period>]}`. Each field shall be one the API exposes to q (§15.5), and shall be an enumeration (§16.4), an identifier (§16.7), a country code (§16.8), or a date; a date field shall name the period it is grouped by, one of `day`, `week`, `month`, `quarter` or `year`, and no other field shall name one. At most two fields may be named. Where sum names a numeric field the API exposes to q, each group carries that field's total in place of its count, in the field's own representation (§16.4). The grouping applies to exactly the elements the request would otherwise return — after q, and only those the caller is authorized to read (§13.3) — so a count can never disclose an element its caller could not open. Every collection shall therefore also support q (§15.5). A request naming more than two fields, a field not exposed to q, a period on a non-date field or a date field without one is rejected with 400. *Rationale:* A chart over a collection needs counts per state, per owner or per month, and counting in the client is correct over one page and quietly wrong over the rest; a parameter on the collection reuses its filter and its authorization rather than duplicating both in a separate reporting endpoint, and binding the grouped fields to those already exposed to q keeps every grouping as cheap as the filter it follows.
@@ -938,22 +954,6 @@ The response is the collection envelope (§15.1) with a groups attribute in plac
 ### 16.8 Use the designated standard codes for currency, country, and language.
 
 [REQUIRED] Use ISO 4217 for currency, ISO 3166-1 alpha-2 for country, and BCP 47 for language tags. *Rationale:* Standard code sets make cross-API and cross-system data directly comparable. *Example:* `"currency": "USD", "country": "US", "language": "en-US"`
-
-### 15.7 A replace of a whole set shall carry across the server-owned fields of unchanged members.
-
-[REQUIRED] Where a PUT replaces a nested set whole, each member that is unchanged shall keep its
-server-owned values; only a member whose client-owned fields change shall have them recomputed.
-*Rationale:* a replace rebuilds every member, so a field such as "when this was last decided" is
-otherwise stamped afresh on every save, and the one question it exists to answer is lost the first
-time anything else in the set changes. Observed 2026-10-05 in the AI service, where an
-organization's stance on a model carries when it was taken.
-
-### 15.8 Server-owned members of a representation shall be refused on write, not ignored.
-
-[REQUIRED] A write that supplies a server-owned member shall be refused with a validation error
-naming it. *Rationale:* silently discarding it leaves a caller believing they set something they did
-not. The cost is that a read-modify-write must strip what it just read, which is the correct trade:
-a caller that cannot see which fields are theirs will get it wrong in both directions.
 
 ---
 
