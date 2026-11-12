@@ -1,19 +1,22 @@
 ---
 shortName: EVENT
 description: >-
-  How services publish and consume events: the envelope, type versioning, what a subscriber may
-  assume about delivery and ordering, what it does with a message it cannot process, and the
-  transactional outbox and inbox that keep a database write and a message together.
+  How services name event types and topics, publish events and consume them: the type name and
+  subject grammar, public and private topics per domain, additive versioning, required access,
+  the facade and outbox, and what a subscriber may assume about delivery and ordering.
 adoptionMetrics:
+  - Share of event types whose names follow the five-token grammar
   - Share of services publishing alongside a database write that use a transactional outbox
   - Share of consumers with non-idempotent side effects that record consumed message identities
 impactMetrics:
   - Incidents of lost or duplicated events caused by a crash between a write and its message
-tags: [eventing, messaging, transactional-outbox, inbox, deduplication]
+  - Incidents of an event reaching an organization not entitled to it
+tags: [eventing, messaging, event-types, topics, subjects, transactional-outbox, inbox, deduplication]
 softwareLifecycle: [ARCHITECTURE_AND_DESIGN, IMPLEMENTATION]
 solutionScope: [APIS_AND_INTEGRATIONS, DATA_AND_PERSISTENCE, SOFTWARE_ARCHITECTURE]
-architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY]
+architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY, SECURITY]
 ---
+
 # Eventing Standard
 
 | Field | Value |
@@ -26,9 +29,9 @@ architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY]
 
 ## Purpose
 
-This standard governs how services publish and consume events: what an event is, the envelope it
-travels in, how a type is versioned, what a subscriber may assume about delivery and ordering, and
-what it must do with a message it cannot process.
+This standard governs how a service names its event types, which topic each type flows on, how a
+type changes over time, how an event is published, and what a subscriber may assume about the
+events it receives.
 
 ## Value Proposition
 
