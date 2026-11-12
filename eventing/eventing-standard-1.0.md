@@ -36,8 +36,8 @@ what it must do with a message it cannot process.
   which a state change commits but the event announcing it is lost.
 - **Redelivery does not repeat side effects** — an inbox records what a consumer has already
   processed, so a redelivered message is recognised rather than applied twice.
-- **A topic is an access boundary chosen on purpose** — approval to receive events is granted per
-  topic, so a topic named for one kind of record grants exactly that record's events.
+- **One topic per service domain** — a subscriber finds any event type's topic from the type's name,
+  and approval to receive a domain's events is one decision.
 - **One contract between publishers and subscribers** — services agree on what an event is, how it
   travels and what a subscriber may assume about it, instead of each pair negotiating its own.
 
@@ -157,14 +157,15 @@ the event is about.
 
 ## 4. Topics
 
-### 4.1 Put the event types about one kind of record on one topic, named for that record.
+### 4.1 Give each service domain one topic, named with the domain's short code.
 
-[REQUIRED] A topic shall carry the event types about one kind of record, whichever service
-publishes them, and shall be named `<namespace>.<record>`: `orgs.organization` carries every
-organization lifecycle type. Approval to receive events is granted per topic, so the topic's name
-is the access boundary, and the designer chooses it on purpose. *Rationale:* A subscriber
-interested in one kind of record reads one topic, and an approver who grants a topic knows exactly
-which events the grant covers.
+[REQUIRED] A service domain shall have exactly one topic, named with its short code, and every
+event type whose `namespace` is that short code shall flow on it: the Order Management
+domain's topic is `ordmgt`, and carries `ordmgt.order-placed.1` and every other type whose
+namespace is `ordmgt`. Approval to receive events is granted per topic, so approval is granted for a whole
+domain's events; a subscriber's filters then select the types it handles (2.5). *Rationale:* A
+subscriber finds any type's topic from the type's name alone, and the domain, which already bounds
+a service's resources and ownership, is the one boundary for its events as well.
 
 ### 4.2 Serve every organization from one topic.
 
