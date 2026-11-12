@@ -36,8 +36,8 @@ what it must do with a message it cannot process.
   which a state change commits but the event announcing it is lost.
 - **Redelivery does not repeat side effects** — an inbox records what a consumer has already
   processed, so a redelivered message is recognised rather than applied twice.
-- **One topic per service domain** — a subscriber finds any event type's topic from the type's name,
-  and approval to receive a domain's events is one decision.
+- **Two topics per service domain** — a subscriber finds any event type's topic from the type's
+  name, and what customers may receive is approved apart from what only the platform may.
 - **One contract between publishers and subscribers** — services agree on what an event is, how it
   travels and what a subscriber may assume about it, instead of each pair negotiating its own.
 
@@ -124,12 +124,22 @@ use for.
 
 ## 3. Event types
 
-### 3.1 Name an event type `<namespace>.<eventName>.<major>`.
+### 3.1 Name an event type `<domain>.<class>.<resource>.<event>.<major>`.
 
-[REQUIRED] An event type's `namespace` shall be the short code of the service domain that owns the
-fact, and its `eventName` shall say what happened, in the past tense, as lowercase words joined by
-dashes: `ident.organization-suspended.1`. *Rationale:* A subscriber reads from the name whose fact
-it is and what happened, and the name is the key every publisher, subscriber and filter matches on.
+[REQUIRED] An event type's name shall have five tokens, each lowercase letters, digits and dashes:
+
+| Token | What it is | Example |
+|---|---|---|
+| `domain` | The short code of the service domain that owns the fact | `ordmgt` |
+| `class` | `public` when a customer organization may receive the type; `private` when only the platform organization may | `public` |
+| `resource` | The `metadata.resourceType` of the record the fact is about, or of the record closest to it | `order` |
+| `event` | What happened to that record, in the past tense, as words joined by dashes | `placed` |
+| `major` | The major version, a positive integer | `1` |
+
+`ordmgt.public.order.placed.1` is the type an order's placement is published as. *Rationale:* The
+name tells a subscriber whose fact it is, who may receive it, which kind of record it is about and
+what happened, and it is the key every publisher, subscriber and filter matches on. Because the
+class is part of the name, making a private type public creates a new type.
 
 ### 3.2 Change a type only by adding, and make a breaking change a new major.
 
@@ -150,22 +160,29 @@ discard an out-of-date change (2.3).
 [REQUIRED] An event type whose events can reach people, as notifications or on any other screen,
 shall declare `requiredAccess`: each relation a person must hold, on an object in the platform's
 authorization model, to read about the event. An entry that names its object by `objectIdPath`
-shall point at a field the payload schema requires. For `exp.expense-approved.1`, the entry is
+shall point at a field the payload schema requires. For `expmgt.public.expense.approved.1`, the entry is
 `viewer` on the `expense` at `payload.expenseId`. *Rationale:* Access is checked when a person
 reads, which can be long after the event; the event type is the one place that knows which record
 the event is about.
 
+### 3.5 Name the one record an event is about.
+
+[REQUIRED] An event type whose events are each about one record shall say where in the payload the
+record's id is, and that field shall be a required UUID. An event type whose events are not about
+one record names none. *Rationale:* The record's id becomes the last token of the event's subject
+(4.3), so a subscriber can receive one record's events alone.
+
 ## 4. Topics
 
-### 4.1 Give each service domain one topic, named with the domain's short code.
+### 4.1 Give each service domain a public topic and a private topic.
 
-[REQUIRED] A service domain shall have exactly one topic, named with its short code, and every
-event type whose `namespace` is that short code shall flow on it: the Order Management
-domain's topic is `ordmgt`, and carries `ordmgt.order-placed.1` and every other type whose
-namespace is `ordmgt`. Approval to receive events is granted per topic, so approval is granted for a whole
-domain's events; a subscriber's filters then select the types it handles (2.5). *Rationale:* A
-subscriber finds any type's topic from the type's name alone, and the domain, which already bounds
-a service's resources and ownership, is the one boundary for its events as well.
+[REQUIRED] A service domain shall have one topic for each class, named `<domain>.<class>`, and
+every event type shall flow on the topic its domain and class name: `ordmgt.public.order.placed.1`
+flows on `ordmgt.public`. A customer organization's machine account may subscribe to a public topic
+once approved; only the platform organization's machine accounts may subscribe to a private topic.
+*Rationale:* Approval to receive events is granted per topic, so a domain's events that customers
+may see and those they may not are approved separately, and the transport refuses a private subject
+to a customer's connection outright.
 
 ### 4.2 Serve every organization from one topic.
 
@@ -173,3 +190,16 @@ a service's resources and ownership, is the one boundary for its events as well.
 organization. Each event's organization is the last token of its subject, and a subscriber
 receives only the organizations its subscription is entitled to. *Rationale:* A topic per tenant
 does not scale, and the transport separates tenants already.
+
+### 4.3 Read an event's subject as `<event type>.<organizationId>.<entityId>`.
+
+[REQUIRED] Every event is placed on a subject of exactly seven tokens: the five of its type (3.1),
+then the id of the organization the event belongs to, then the id of the record it is about, or `_`
+when its type names no record (3.5):
+
+`ordmgt.public.order.placed.1.3f9a2c71-8b4e-4d1a-9c6f-2e7b5a0d4c18.8d1e4b2a-5c3f-4a6e-9b7d-0f2c1e3a5b48`
+
+A subscriber's filters select on any of the seven tokens: `ordmgt.public.order.>` is every order
+event, and `ordmgt.public.order.*.*.*.<orderId>` is one order's. *Rationale:* A fixed number of
+tokens keeps every filter and permission a plain pattern, and the record's id lets a subscriber
+follow one record.
