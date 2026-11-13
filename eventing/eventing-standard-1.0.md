@@ -282,13 +282,13 @@ and accounts payable acts on that one event, without tracking each expense's app
 
 ### 3.8 Choose the class by who may receive the fact.
 
-[REQUIRED] An event type's class shall be `public` when a customer organization's own services
-may receive the fact about that organization's records, and `private` when the fact concerns how
+[REQUIRED] An event type's class shall be `public` when a customer organization's service
+consumers may receive the fact about that organization's records, and `private` when the fact concerns how
 the platform itself runs. The class is chosen when the type is first registered. *Rationale:* The
 class decides which organizations may ever subscribe, and it is part of the type's name, so moving
 a type to the other class creates a new type.
 
-*Example:* `ordmgt.public.order.placed.1` is public, because a customer's own integration acts on
+*Example:* `ordmgt.public.order.placed.1` is public, because a customer's service consumer acts on
 its orders. `notify.private.event-subscription.dead-lettered.1` is private, because it reports how
 the platform's delivery is running.
 
