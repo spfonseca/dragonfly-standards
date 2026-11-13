@@ -161,12 +161,20 @@ discard an out-of-date change (2.3).
 ### 3.4 Declare the access a person needs to read about an event.
 
 [REQUIRED] An event type whose events can reach people, as notifications or on any other screen,
-shall declare `requiredAccess`: each relation a person must hold, on an object in the platform's
-authorization model, to read about the event. An entry that names its object by `objectIdPath`
-shall point at a field the payload schema requires. For `expmgt.public.expense.approved.1`, the entry is
-`viewer` on the `expense` at `payload.expenseId`. *Rationale:* Access is checked when a person
-reads, which can be long after the event; the event type is the one place that knows which record
-the event is about.
+shall declare `requiredAccess`: each permission a person must hold, on an object in the platform's
+authorization model, to read about the event. Every entry must hold.
+
+- Name the permission that grants reading the record the event is about, so reading about an event
+  never needs more or less than reading the record. For `expmgt.public.expense.approved.1`, the
+  entry is `can_view` on the `expense` at `payload.expenseId`.
+- Name the object by `objectIdPath` when each event names it, pointing at a field the payload
+  schema requires. Name it by `objectId` when the type is always about one fixed object.
+- Declare no entry when the event is a fact about the whole organization that every person in its
+  audience may read.
+
+*Rationale:* Access is checked when a person reads, which can be long after the event, and the
+event type is the one place that knows which record the event is about. A permission rather than a
+role relation keeps the declaration valid when roles change.
 
 ### 3.5 Name the one record an event is about.
 
