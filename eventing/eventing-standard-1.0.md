@@ -1,20 +1,23 @@
 ---
 shortName: EVENT
 description: >-
-  How services name event types and topics, publish events and consume them: the type name and
-  subject grammar, public and private topics per domain, additive versioning, required access,
-  the facade and outbox, and what a subscriber may assume about delivery and ordering.
+  How services publish and consume events: when to publish, the type name and subject grammar,
+  public and private topics, payload content, versioning, required access, the facade and outbox,
+  delivery, failure and dead-lettering, and how events are logged and tested.
 adoptionMetrics:
   - Share of event types whose names follow the five-token grammar
   - Share of services publishing alongside a database write that use a transactional outbox
   - Share of consumers with non-idempotent side effects that record consumed message identities
+  - Share of event types whose payload schema describes every property
+  - Share of subscribing services with handler tests that run without the bus
 impactMetrics:
   - Incidents of lost or duplicated events caused by a crash between a write and its message
   - Incidents of an event reaching an organization not entitled to it
-tags: [eventing, messaging, event-types, topics, subjects, transactional-outbox, inbox, deduplication]
-softwareLifecycle: [ARCHITECTURE_AND_DESIGN, IMPLEMENTATION]
+  - Dead-letterings left unhandled by the subscription's owner
+tags: [eventing, messaging, event-types, topics, subjects, transactional-outbox, inbox, deduplication, dead-letter, payload, contract-testing]
+softwareLifecycle: [ARCHITECTURE_AND_DESIGN, IMPLEMENTATION, VERIFICATION_AND_TESTING, OPERATE_AND_SUPPORT]
 solutionScope: [APIS_AND_INTEGRATIONS, DATA_AND_PERSISTENCE, SOFTWARE_ARCHITECTURE]
-architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY, SECURITY]
+architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY, SECURITY, PRIVACY, OBSERVABILITY, TESTABILITY]
 ---
 
 # Eventing Standard
@@ -29,9 +32,10 @@ architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY, SECURITY]
 
 ## Purpose
 
-This standard governs how a service names its event types, which topic each type flows on, how a
-type changes over time, how an event is published, and what a subscriber may assume about the
-events it receives.
+This standard governs when a service publishes an event, how it names and documents the event's
+type, what the payload carries, which topic the type flows on, how a type changes over time, how an
+event is published, what a subscriber may assume about the events it receives, what a subscriber
+does when it cannot handle one, and how publishers and subscribers log and test their events.
 
 ## Value Proposition
 
@@ -41,6 +45,10 @@ events it receives.
   processed, so a redelivered message is recognised rather than applied twice.
 - **Two topics per service domain** — a subscriber finds any event type's topic from the type's
   name, and what customers may receive is approved apart from what only the platform may.
+- **Failures reach an owner** — every event a subscriber cannot handle ends in its subscription's
+  dead-letter stream, and the platform announces it, so the subscription's owner acts on it.
+- **Contracts are tested before deploy** — a publisher tests its events against the type's payload
+  schema and a subscriber tests its handler without the bus, so a broken contract fails a build.
 - **One contract between publishers and subscribers** — services agree on what an event is, how it
   travels and what a subscriber may assume about it, instead of each pair negotiating its own.
 
@@ -86,6 +94,18 @@ that names an organization describes the fact; it never decides which organizati
 belongs to. *Rationale:* A subscriber trusts an event's organization only because no publisher can
 choose it.
 
+### 1.4 Publish an event to report a fact; call an API to have something done.
+
+[REQUIRED] A service shall publish an event to report something that has already happened to a
+record it owns, for any service to react to. A service that needs another service to act, or needs
+an answer, shall call that service's API. *Rationale:* An event's publisher does not know who
+subscribes, so it cannot rely on any one of them acting; an API call names the service that acts
+and returns its answer.
+
+*Example:* Expense management publishes `expmgt.public.expense.approved.1` when an expense is
+approved, and the payment service and the Notification Service each react to it. To learn an
+employee's cost centre before approving, expense management calls the organization service's API.
+
 
 ## 2. Consuming
 
@@ -124,6 +144,48 @@ between tenants in a subscriber's work.
 rather than receive the whole topic and discard the rest. *Rationale:* Filters are applied by the
 transport without opening the event, so a subscriber neither pays for nor holds events it has no
 use for.
+
+### 2.6 Answer every event as handled, to be retried, or never to be handled.
+
+[REQUIRED] A subscriber shall answer each event it receives in one of three ways. It answers
+*handled* when it has applied the event or deliberately skipped it. It answers *retry* when the
+event can succeed later, such as when a service it calls is unavailable; the platform then
+redelivers the event on the subscription's delivery schedule. It answers *never* when the event can
+never succeed, such as when its body cannot be read; the platform then delivers it no more. An
+unexpected error in the handler counts as *retry*. *Rationale:* Each answer tells the platform
+whether to deliver the event again, so a subscriber that answers accurately is retried exactly when
+a retry can help.
+
+*Example:* With the platform's service SDK, a handler returns `Handled.DONE`, `Handled.LATER` or
+`Handled.NEVER`, which the SDK sends to the bus as an acknowledgement, a negative acknowledgement
+or a termination.
+
+### 2.7 Act on every dead-lettering of the subscription.
+
+[REQUIRED] The owner of an event subscription shall act on every event dead-lettered from it. An
+event is dead-lettered when it has been retried for the whole delivery schedule; it is then kept,
+with its body and headers intact, in the subscription's own dead-letter stream, and the platform
+publishes an event naming the subscription, the dead-lettered event's `eventId` and `type`, and
+the number of attempts. The owner finds the cause, fixes it, and has the event replayed by the
+Notification Service's operators. *Rationale:* A dead-lettered event is a fact the subscriber has
+not applied, and the owner is the one party that knows what applying it requires.
+
+### 2.8 Handle the events a new subscription starts with.
+
+[REQUIRED] A subscriber shall handle every event its new subscription receives first, which is
+each event its topic still holds when the subscription is created, as it handles events published
+afterwards. *Rationale:* A new subscription starts from the oldest event its topic holds, so a
+subscriber receives events published before it subscribed.
+
+*Example:* A reporting service that subscribes to `ordmgt.public` on a Wednesday receives the
+orders placed since the oldest event the topic holds, then each order as it is placed.
+
+### 2.9 Read events older than the topic holds from the event log.
+
+[RECOMMENDED] A subscriber that needs events older than its topic holds, to build or rebuild its
+own state, should read them from the platform's event log (`GET /v1/events`), filtered by type,
+and apply them with the same checks as delivered events (2.2, 2.3). *Rationale:* The event log is
+the platform's one archive of every event, and a topic holds only its recent events.
 
 ## 3. Event types
 
@@ -187,6 +249,63 @@ record's id is, and that field shall be a required UUID. An event type whose eve
 one record names none. *Rationale:* The record's id becomes the last token of the event's subject
 (4.3), so a subscriber can receive one record's events alone.
 
+### 3.6 Name the event for the business fact that happened.
+
+[REQUIRED] An event type's `event` token shall name the business fact in the domain's own words,
+in the past tense: what a person in that domain would say happened to the record. *Rationale:* A
+subscriber chooses types by what happened, and a name that states the fact lets it choose without
+reading the payload.
+
+*Example:* `expmgt.public.expense.submitted.1`, `expmgt.public.expense.approved.1` and
+`expmgt.public.expense.reimbursed.1` each name one step of an expense's life.
+
+### 3.7 Publish one event for each business fact a change makes true.
+
+[REQUIRED] A change that makes several business facts true shall publish one event for each fact,
+each on the record that fact is about. *Rationale:* Each subscriber filters on the facts it acts
+on, and one event per fact lets it receive those alone.
+
+*Example:* Approving the last open expense on a report publishes
+`expmgt.public.expense.approved.1` about the expense and `expmgt.public.expense-report.closed.1`
+about the report.
+
+### 3.8 Choose the class by who may receive the fact.
+
+[REQUIRED] An event type's class shall be `public` when a customer organization's own services
+may receive the fact about that organization's records, and `private` when the fact concerns how
+the platform itself runs. The class is chosen when the type is first registered. *Rationale:* The
+class decides which organizations may ever subscribe, and it is part of the type's name, so moving
+a type to the other class creates a new type.
+
+*Example:* `ordmgt.public.order.placed.1` is public, because a customer's own integration acts on
+its orders. `notify.private.event-subscription.dead-lettered.1` is private, because it reports how
+the platform's delivery is running.
+
+### 3.9 Carry no secret, and only the personal data a subscriber acts on.
+
+[REQUIRED] An event's payload shall carry no credential, token or other secret, and shall carry
+personal data only where a subscriber of the type acts on it. *Rationale:* Every event is kept in
+the platform's event log and delivered to every subscriber of its topic, so whatever a payload
+holds is stored and copied beyond the record it came from.
+
+### 3.10 Keep each event within the bus's maximum message size.
+
+[REQUIRED] A publisher shall keep each event, its payload and headers together, within the event
+bus's maximum message size. The facade refuses a larger event with `400` `payload-too-large` and records nothing.
+*Rationale:* The bus delivers a message whole or not at all, so the size limit is checked where
+the event is accepted.
+
+### 3.11 Document a type for the subscriber deciding whether to subscribe.
+
+[REQUIRED] An event type shall carry a display name, a description that states what has happened
+when the event is published, in the domain's own terms, and a steward, the person who answers for
+the type. Its payload schema shall describe every property. *Rationale:* A subscriber decides from
+the type's entry alone whether the type reports the fact it needs and what each field means.
+
+*Example:* `expmgt.public.expense.approved.1` has the display name "Expense approved", the
+description "An approver has approved an expense, and it is ready for reimbursement", and the
+payload property `approvedById` described as "The user who approved the expense".
+
 ## 4. Topics
 
 ### 4.1 Give each service domain a public topic and a private topic.
@@ -221,3 +340,53 @@ record's id lets a subscriber follow one record.
 
 *Example:* The filter `ordmgt.public.order.>` selects every order event, and
 `ordmgt.public.order.*.*.*.8d1e4b2a-5c3f-4a6e-9b7d-0f2c1e3a5b48` selects one order's.
+
+## 5. Observability
+
+### 5.1 Log every event's handling with its `eventId` and type.
+
+[REQUIRED] A subscriber shall write the event's `eventId` and type on every log line about handling
+that event, including how it answered (2.6). A publisher shall log the `eventId` the facade returns
+for each event it publishes. *Rationale:* The `eventId` is the one value the facade, the bus, the
+dead-letter stream and every subscriber share, so it is what an investigation follows from one log
+to the next.
+
+*Example:* `eventing: event 5d2c8e1a-7b4f-4a3e-9c6d-1f8b2e4a7c90 (ordmgt.public.order.placed.1) DONE`.
+
+### 5.2 Watch the subscription's oldest unacknowledged event.
+
+[REQUIRED] The owner of an event subscription shall watch its oldest unacknowledged event's age,
+which the platform measures for every subscription. *Rationale:* A subscriber that falls behind
+delays every fact it has yet to apply, and the age of its oldest waiting event shows that before
+anything is dead-lettered.
+
+## 6. Testing
+
+### 6.1 Test that every event a publisher builds meets its type's payload schema.
+
+[REQUIRED] A publisher shall test, in its own test suite, that each event it builds validates
+against the payload schema of its type's current version. *Rationale:* The facade refuses an event
+that does not validate, so a test that validates it first moves the failure from a running service
+to the build.
+
+### 6.2 Test a handler by calling it with events, without the bus.
+
+[REQUIRED] A subscriber shall test its handler by calling it directly with events built in the
+test, and checking its answer (2.6) and the records it wrote. *Rationale:* The handler holds the
+subscriber's logic, and calling it directly tests that logic without a running bus.
+
+*Example:* A test of the Notification Service's engine calls its handler with an
+`expmgt.public.expense.approved.1` event and checks that it answers `Handled.DONE` and wrote one
+notification.
+
+### 6.3 Test a handler with only the payload's required fields.
+
+[REQUIRED] A subscriber shall test its handler with an event whose payload carries only the fields
+its type's schema requires. *Rationale:* A type gains optional fields in later minor versions
+(3.2), so a handler that works on the required fields alone works on every event of its major.
+
+### 6.4 Test a handler with a repeated event and an out-of-date change.
+
+[REQUIRED] A subscriber shall test that its handler, given the same event twice, applies it once
+(2.2), and that, given a change older than one it has applied, discards it (2.3). *Rationale:* The
+bus redelivers and reorders events in normal running, so these two cases occur in production.
