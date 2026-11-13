@@ -88,11 +88,15 @@ transport, so every event on the bus is valid, attributable and archived.
 
 ### 1.3 Leave the event's organization to the platform.
 
-[REQUIRED] A publisher shall not supply the organization an event belongs to. The facade sets it
-from the publisher's machine account, which belongs to exactly one organization. A payload field
-that names an organization describes the fact; it never decides which organization the event
-belongs to. *Rationale:* A subscriber trusts an event's organization only because no publisher can
-choose it.
+[REQUIRED] The facade shall set the organization an event belongs to. For an event whose type names
+an `organizationIdPath`, the organization is the value of that payload field: a platform service
+reporting a fact about a customer organization's record, such as Software Engineering Design's
+`sweng.private.service-subscription.activated.1` naming `payload.organizationId`, registers its type
+this way. A type names an `organizationIdPath` only when every publisher it lists is a machine
+account of the platform organization. For every other event, the organization is that of the
+publisher's machine account, which belongs to exactly one organization. *Rationale:* A subscriber
+trusts an event's organization because a customer's publisher never chooses it, and a platform
+service's choice is fixed in the type it registered.
 
 ### 1.4 Publish an event to report a fact; call an API to have something done.
 
