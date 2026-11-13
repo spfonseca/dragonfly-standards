@@ -184,24 +184,23 @@ to receive the topic's events, and it covers the events published from then on.
 *Example:* A reporting service whose subscription to `ordmgt.public` is approved on a Wednesday at
 10:00 receives each order placed from 10:00 on, and none placed before.
 
-### 2.9 Read the state that predates a subscription from the publisher's API.
+### 2.9 Read a record's state from the publisher's API, and past events from the event log.
 
-[RECOMMENDED] A subscriber that needs records as they stood before its subscription was approved
-should read them from the publishing service's API, keep each record's `lastUpdatedAt`, and then
-process delivered events with the same checks (2.2, 2.3). *Rationale:* The publisher's API checks
-the subscriber's access to each record, so the subscriber starts from exactly the records it may
-read, and the kept `lastUpdatedAt` discards any event that reports a change the read already
-included.
+[RECOMMENDED] For a record's state as it stood before its subscription was approved, a subscriber
+should read the record from the publishing service's API, keep its `lastUpdatedAt`, and then
+process delivered events with the same checks (2.2, 2.3). *Rationale:* The publisher's API returns
+each record's current state and checks the subscriber's access to it, and the kept `lastUpdatedAt`
+discards any event that reports a change the read already included.
 
 *Example:* The reporting service reads its organization's open orders from the order service's
 `GET /v1/orders`, then processes `ordmgt.public.order.*` events as they arrive.
 
-[OPTIONAL] In an exceptional case, such as an absence longer than its topic keeps events (4.4), a
-subscriber may read its own organization's events of public types from the platform's event log
-(`GET /v1/events`), filtered by type, and process them with the same checks. The event log is
-rate-limited per client. *Rationale:* The event log is the platform's archive of every event, kept
-longer than any topic, and its rate limit keeps it a recovery path rather than a second delivery
-channel.
+[OPTIONAL] For the events themselves, in an exceptional case such as an absence longer than its
+topic keeps events (4.4), a subscriber may read its own organization's events of public types from
+the platform's event log (`GET /v1/events`), filtered by type, and process them with the same
+checks. The event log is rate-limited per client. *Rationale:* The event log is the platform's
+archive of every event, kept longer than any topic, and its rate limit keeps it a recovery path
+rather than a second delivery channel.
 
 ## 3. Event types
 
