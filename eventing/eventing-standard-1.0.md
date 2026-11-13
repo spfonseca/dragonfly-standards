@@ -150,15 +150,20 @@ use for.
 [REQUIRED] A subscriber shall answer each event it receives in one of three ways. It answers
 *handled* when it has applied the event or deliberately skipped it. It answers *retry* when the
 event can succeed later, such as when a service it calls is unavailable; the platform then
-redelivers the event on the subscription's delivery schedule. It answers *never* when the event can
-never succeed, such as when its body cannot be read; the platform then delivers it no more. An
-unexpected error in the handler counts as *retry*. *Rationale:* Each answer tells the platform
-whether to deliver the event again, so a subscriber that answers accurately is retried exactly when
-a retry can help.
+redelivers the event at the next attempt of its delivery schedule. The schedule is a fixed number
+of attempts at set times after the first delivery, and after the last attempt the event is
+dead-lettered (2.7). It answers *never* when the event can never succeed, such as when its body
+cannot be read; the platform then delivers it no more. An unexpected error in the handler counts as
+*retry*, and so does an event the subscriber has not answered within 30 seconds. *Rationale:* Each
+answer tells the platform whether to deliver the event again, so a subscriber that answers
+accurately is retried exactly when a retry can help.
 
 *Example:* With the platform's service SDK, a handler returns `Handled.DONE`, `Handled.LATER` or
 `Handled.NEVER`, which the SDK sends to the bus as an acknowledgement, a negative acknowledgement
 or a termination.
+
+*Example:* The platform's default schedule makes six attempts, at 0, 10 seconds, 1 minute,
+5 minutes, 15 minutes and 35 minutes after the first delivery.
 
 ### 2.7 Act on every dead-lettering of the subscription.
 
