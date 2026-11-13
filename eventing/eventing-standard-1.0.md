@@ -268,15 +268,17 @@ reading the payload.
 *Example:* `expmgt.public.expense.submitted.1`, `expmgt.public.expense.approved.1` and
 `expmgt.public.expense.reimbursed.1` each name one step of an expense's life.
 
-### 3.7 Publish one event for each business fact a change makes true.
+### 3.7 Design event types around the workflows that subscribe to them.
 
-[REQUIRED] A change that makes several business facts true shall publish one event for each fact,
-each on the record that fact is about. *Rationale:* Each subscriber filters on the facts it acts
-on, and one event per fact lets it receive those alone.
+[REQUIRED] An event type shall let a subscriber decide whether to act from the one event it
+receives, without combining it with other events or reading the publisher's state back. A fact that
+holds once several conditions are true is one event type when a subscriber acts on that fact.
+*Rationale:* A subscriber that has to combine events or read state back to decide rebuilds the
+publisher's logic, and two subscribers rebuilding it disagree.
 
-*Example:* Approving the last open expense on a report publishes
-`expmgt.public.expense.approved.1` about the expense and `expmgt.public.expense-report.closed.1`
-about the report.
+*Example:* Accounts payable pays an expense report once every expense on it is approved. Expense
+management publishes `expmgt.public.expense-report.approved.1` when the last expense is approved,
+and accounts payable acts on that one event, without tracking each expense's approval.
 
 ### 3.8 Choose the class by who may receive the fact.
 
