@@ -196,6 +196,13 @@ included.
 *Example:* The reporting service reads its organization's open orders from the order service's
 `GET /v1/orders`, then processes `ordmgt.public.order.*` events as they arrive.
 
+[OPTIONAL] In an exceptional case, such as an absence longer than its topic keeps events (4.4), a
+subscriber may read its own organization's events of public types from the platform's event log
+(`GET /v1/events`), filtered by type, and process them with the same checks. The event log is
+rate-limited per client. *Rationale:* The event log is the platform's archive of every event, kept
+longer than any topic, and its rate limit keeps it a recovery path rather than a second delivery
+channel.
+
 ## 3. Event types
 
 ### 3.1 Name an event type `<domain>.<class>.<resource>.<event>.<major>`.
