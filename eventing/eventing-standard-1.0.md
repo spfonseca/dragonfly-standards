@@ -356,6 +356,17 @@ record's id lets a subscriber follow one record.
 *Example:* The filter `ordmgt.public.order.>` selects every order event, and
 `ordmgt.public.order.*.*.*.8d1e4b2a-5c3f-4a6e-9b7d-0f2c1e3a5b48` selects one order's.
 
+### 4.4 Keep each event on its topic for 7 days.
+
+[REQUIRED] A topic shall keep each event for 7 days after it is published, and a subscription's
+dead-letter stream shall keep each dead-lettered event for 7 days after it is dead-lettered. A
+subscriber away for longer than 7 days rebuilds what it missed from the publisher's API (2.9).
+*Rationale:* Seven days covers a subscriber's outage, a weekend and its recovery, and is the most
+common default among event and messaging services.
+
+*Example:* A reporting service down from Friday evening to Monday morning receives every order
+event published in between when it reconnects.
+
 ## 5. Observability
 
 ### 5.1 Log every event's handling with its `eventId` and type.
