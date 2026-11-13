@@ -131,18 +131,20 @@ use for.
 
 [REQUIRED] An event type's name shall have five tokens, each lowercase letters, digits and dashes:
 
-| Token | What it is | Example |
-|---|---|---|
-| `domain` | The short code of the service domain that owns the fact | `ordmgt` |
-| `class` | `public` when a customer organization may receive the type; `private` when only the platform organization may | `public` |
-| `resource` | The `metadata.resourceType` of the record the fact is about, or of the record closest to it | `order` |
-| `event` | What happened to that record, in the past tense, as words joined by dashes | `placed` |
-| `major` | The major version, a positive integer | `1` |
+| Token | What it is |
+|---|---|
+| `domain` | The short code of the service domain that owns the fact |
+| `class` | `public` when a customer organization may receive the type; `private` when only the platform organization may |
+| `resource` | The `metadata.resourceType` of the record the fact is about, or of the record closest to it |
+| `event` | What happened to that record, in the past tense, as words joined by dashes |
+| `major` | The major version, a positive integer |
 
-`ordmgt.public.order.placed.1` is the type an order's placement is published as. *Rationale:* The
-name tells a subscriber whose fact it is, who may receive it, which kind of record it is about and
-what happened, and it is the key every publisher, subscriber and filter matches on. Because the
-class is part of the name, making a private type public creates a new type.
+*Rationale:* The name tells a subscriber whose fact it is, who may receive it, which kind of record
+it is about and what happened, and it is the key every publisher, subscriber and filter matches on.
+Because the class is part of the name, making a private type public creates a new type.
+
+*Example:* `ordmgt.public.order.placed.1` is the type an order's placement is published as: domain
+`ordmgt`, class `public`, resource `order`, event `placed`, major `1`.
 
 ### 3.2 Change a type only by adding, and make a breaking change a new major.
 
@@ -165,8 +167,7 @@ shall declare `requiredAccess`: each permission a person must hold, on an object
 authorization model, to read about the event. Every entry must hold.
 
 - Name the permission that grants reading the record the event is about, so reading about an event
-  never needs more or less than reading the record. For `expmgt.public.expense.approved.1`, the
-  entry is `can_view` on the `expense` at `payload.expenseId`.
+  never needs more or less than reading the record.
 - Name the object by `objectIdPath` when each event names it, pointing at a field the payload
   schema requires. Name it by `objectId` when the type is always about one fixed object.
 - Declare no entry when the event is a fact about the whole organization that every person in its
@@ -175,6 +176,9 @@ authorization model, to read about the event. Every entry must hold.
 *Rationale:* Access is checked when a person reads, which can be long after the event, and the
 event type is the one place that knows which record the event is about. A permission rather than a
 role relation keeps the declaration valid when roles change.
+
+*Example:* For `expmgt.public.expense.approved.1`, the one entry is `can_view` on the `expense` at
+`payload.expenseId`.
 
 ### 3.5 Name the one record an event is about.
 
@@ -188,17 +192,19 @@ one record names none. *Rationale:* The record's id becomes the last token of th
 ### 4.1 Give each service domain a public topic and a private topic.
 
 [REQUIRED] A service domain shall have one topic for each class, named `<domain>.<class>`, and
-every event type shall flow on the topic its domain and class name: `ordmgt.public.order.placed.1`
-flows on `ordmgt.public`. A customer organization's machine account may subscribe to a public topic
+every event type shall flow on the topic its domain and class name. A customer organization's machine account may subscribe to a public topic
 once approved; only the platform organization's machine accounts may subscribe to a private topic.
 *Rationale:* Approval to receive events is granted per topic, so a domain's events that customers
 may see and those they may not are approved separately, and the transport refuses a private subject
 to a customer's connection outright.
 
+*Example:* `ordmgt.public.order.placed.1` flows on `ordmgt.public`, and
+`ordmgt.private.order.fraud-flagged.1` flows on `ordmgt.private`.
+
 ### 4.2 Serve every organization from one topic.
 
 [REQUIRED] A topic shall carry every organization's events, and shall never be created per
-organization. Each event's organization is the last token of its subject, and a subscriber
+organization. Each event's organization is the sixth token of its subject (4.3), and a subscriber
 receives only the organizations its subscription is entitled to. *Rationale:* A topic per tenant
 does not scale, and the transport separates tenants already.
 
@@ -206,11 +212,12 @@ does not scale, and the transport separates tenants already.
 
 [REQUIRED] Every event is placed on a subject of exactly seven tokens: the five of its type (3.1),
 then the id of the organization the event belongs to, then the id of the record it is about, or `_`
-when its type names no record (3.5):
+when its type names no record (3.5). A subscriber's filters select on any of the seven tokens.
+*Rationale:* A fixed number of tokens keeps every filter and permission a plain pattern, and the
+record's id lets a subscriber follow one record.
 
-`ordmgt.public.order.placed.1.3f9a2c71-8b4e-4d1a-9c6f-2e7b5a0d4c18.8d1e4b2a-5c3f-4a6e-9b7d-0f2c1e3a5b48`
+*Example:* An order placed in one organization is placed on
+`ordmgt.public.order.placed.1.3f9a2c71-8b4e-4d1a-9c6f-2e7b5a0d4c18.8d1e4b2a-5c3f-4a6e-9b7d-0f2c1e3a5b48`.
 
-A subscriber's filters select on any of the seven tokens: `ordmgt.public.order.>` is every order
-event, and `ordmgt.public.order.*.*.*.<orderId>` is one order's. *Rationale:* A fixed number of
-tokens keeps every filter and permission a plain pattern, and the record's id lets a subscriber
-follow one record.
+*Example:* The filter `ordmgt.public.order.>` selects every order event, and
+`ordmgt.public.order.*.*.*.8d1e4b2a-5c3f-4a6e-9b7d-0f2c1e3a5b48` selects one order's.
