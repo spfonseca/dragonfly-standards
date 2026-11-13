@@ -307,16 +307,19 @@ refuses a larger event with `400` `payload-too-large` and records nothing. *Rati
 is checked when the event is published, so every event the facade accepts reaches each subscriber
 whole.
 
-### 3.11 Document a type for the subscriber deciding whether to subscribe.
+### 3.11 Document every type, and list each public type in the Developer Portal.
 
 [REQUIRED] An event type shall carry a display name, a description that states what has happened
 when the event is published, in the domain's own terms, and a steward, the person who answers for
-the type. Its payload schema shall describe every property. *Rationale:* A subscriber decides from
-the type's entry alone whether the type reports the fact it needs and what each field means.
+the type. Its payload schema shall describe every property. Every public event type shall be listed
+in the Developer Portal with that documentation, its topic and its payload schema. *Rationale:* A
+service consumer's developer finds the events a domain offers in the Developer Portal, and decides
+from the type's entry alone whether it reports the fact they need and what each field means.
 
 *Example:* `expmgt.public.expense.approved.1` has the display name "Expense approved", the
 description "An approver has approved an expense, and it is ready for reimbursement", and the
-payload property `approvedById` described as "The user who approved the expense".
+payload property `approvedById` described as "The user who approved the expense". A developer
+browsing the Developer Portal finds it under expense management's `expmgt.public` topic.
 
 ## 4. Topics
 
