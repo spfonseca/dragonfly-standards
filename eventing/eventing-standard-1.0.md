@@ -175,22 +175,26 @@ the number of attempts. The owner finds the cause, fixes it, and has the event r
 Notification Service's operators. *Rationale:* A dead-lettered event is one whose work the
 subscriber has not done, and the owner is the one party that knows what that work requires.
 
-### 2.8 Handle the events a new subscription starts with.
+### 2.8 Expect a subscription to start with the first event published after its approval.
 
-[REQUIRED] A subscriber shall handle every event its new subscription receives first, which is
-each event its topic still holds when the subscription is created, as it handles events published
-afterwards. *Rationale:* A new subscription starts from the oldest event its topic holds, so a
-subscriber receives events published before it subscribed.
+[REQUIRED] A subscriber shall treat the first event its subscription delivers as the first event
+published after the subscription was approved. *Rationale:* Approval is the subscriber's permission
+to receive the topic's events, and it covers the events published from then on.
 
-*Example:* A reporting service that subscribes to `ordmgt.public` on a Wednesday receives the
-orders placed since the oldest event the topic holds, then each order as it is placed.
+*Example:* A reporting service whose subscription to `ordmgt.public` is approved on a Wednesday at
+10:00 receives each order placed from 10:00 on, and none placed before.
 
-### 2.9 Read events older than the topic holds from the event log.
+### 2.9 Read the state that predates a subscription from the publisher's API.
 
-[RECOMMENDED] A subscriber that needs events older than its topic holds, to build or rebuild its
-own state, should read them from the platform's event log (`GET /v1/events`), filtered by type,
-and process them with the same checks as delivered events (2.2, 2.3). *Rationale:* The event log is
-the platform's one archive of every event, and a topic holds only its recent events.
+[RECOMMENDED] A subscriber that needs records as they stood before its subscription was approved
+should read them from the publishing service's API, keep each record's `lastUpdatedAt`, and then
+process delivered events with the same checks (2.2, 2.3). *Rationale:* The publisher's API checks
+the subscriber's access to each record, so the subscriber starts from exactly the records it may
+read, and the kept `lastUpdatedAt` discards any event that reports a change the read already
+included.
+
+*Example:* The reporting service reads its organization's open orders from the order service's
+`GET /v1/orders`, then processes `ordmgt.public.order.*` events as they arrive.
 
 ## 3. Event types
 
@@ -362,8 +366,8 @@ to the next.
 
 [REQUIRED] The owner of an event subscription shall watch its oldest unacknowledged event's age,
 which the platform measures for every subscription. *Rationale:* A subscriber that falls behind
-delays the work of every event it has yet to process, and the age of its oldest waiting event shows that before
-anything is dead-lettered.
+delays the work of every event it has yet to process, and the age of its oldest waiting event
+shows that before anything is dead-lettered.
 
 ## 6. Testing
 
