@@ -368,12 +368,13 @@ to the next.
 
 *Example:* `eventing: event 5d2c8e1a-7b4f-4a3e-9c6d-1f8b2e4a7c90 (ordmgt.public.order.placed.1) DONE`.
 
-### 5.2 Watch the subscription's oldest unacknowledged event.
+### 5.2 Alert the subscription's owner when its oldest unacknowledged event passes 15 minutes.
 
-[REQUIRED] The owner of an event subscription shall watch its oldest unacknowledged event's age,
-which the platform measures for every subscription. *Rationale:* A subscriber that falls behind
-delays the work of every event it has yet to process, and the age of its oldest waiting event
-shows that before anything is dead-lettered.
+[REQUIRED] The owner of an event subscription shall be alerted when its oldest unacknowledged
+event is older than 15 minutes, using the age the platform measures for every subscription.
+*Rationale:* A subscriber that falls behind delays the work of every event it has yet to process,
+and an alert at 15 minutes leaves the owner 20 minutes to act before the delivery schedule's last
+attempt, at 35 minutes, dead-letters the event.
 
 ## 6. Testing
 
