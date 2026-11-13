@@ -2,8 +2,8 @@
 shortName: EVENT
 description: >-
   How services publish and consume events: when to publish, the type name and subject grammar,
-  public and private topics, payload content, versioning, required access, the facade and outbox,
-  delivery, failure and dead-lettering, and how events are logged and tested.
+  public and private topics, payload content, versioning, required access, the facade, outbox and
+  envelope, delivery, failure and dead-lettering, and how events are logged and tested.
 adoptionMetrics:
   - Share of event types whose names follow the five-token grammar
   - Share of services publishing alongside a database write that use a transactional outbox
@@ -405,5 +405,40 @@ its type's schema requires. *Rationale:* A type gains optional fields in later m
 
 [REQUIRED] A subscriber shall test that its handler, given the same event twice, does its work once
 (2.2), and that, given a change older than one it has already applied to the record, discards it
-(2.3). *Rationale:* The
-bus redelivers and reorders events in normal running, so these two cases occur in production.
+(2.3). *Rationale:* The bus redelivers and reorders events in normal running, so these two cases occur in production.
+
+## 7. The envelope
+
+### 7.1 Supply an event's type, time, correlation and payload, and leave the rest to the platform.
+
+[REQUIRED] A publisher shall supply, for each event, its `eventType`, `occurredAt` (when the fact
+happened, on the publisher's clock), `correlationId` (the platform's correlation identifier from
+the request that caused the event) and `payload`. The platform sets `eventId`, `publishedAt` (when
+the facade accepted the event), the organization and the publisher. *Rationale:* What only the
+publisher knows comes from the publisher, and what a subscriber trusts to identify and attribute
+the event comes from the platform, which no publisher can falsify.
+
+*Example:* Expense management publishes `expmgt.public.expense.approved.1` with `occurredAt` set
+to the moment the approver approved, the `correlationId` of the approver's request, and the
+expense's id and `lastUpdatedAt` in the payload. A publisher sending from its outbox stores the
+request's `correlationId` on the outbox row and sends it with the event.
+
+### 7.2 Route on the envelope's headers, and read the body for the fact.
+
+[RECOMMENDED] A subscriber should filter, route and recognise repeats from the headers every event
+carries, `eventId`, `type`, `organizationId`, `correlationId` and `occurredAt`, and read the body,
+the event's full representation, for the fact itself. *Rationale:* The headers carry what routing
+needs without parsing the body, and the body is the same representation `GET /v1/events/{eventId}`
+returns, so one shape serves both.
+
+### 7.3 Deliver an event outside the platform as a CloudEvent.
+
+[REQUIRED] An event delivered to a receiver outside the platform shall be sent as a CloudEvent,
+with `id` set to `eventId`, `type` to `eventType`, `time` to `occurredAt`, `source` to the
+publishing service and `subject` to the id of the record the event is about. *Rationale:* An
+outside receiver reads the industry's common event format, and a fixed mapping lets the
+platform's own names stay as they are.
+
+*Example:* An approved expense delivered to a customer's webhook arrives as a CloudEvent whose
+`id` is the event's `eventId` and whose `subject` is the expense's id.
+
