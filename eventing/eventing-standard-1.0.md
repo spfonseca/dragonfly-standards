@@ -42,7 +42,7 @@ does when it cannot handle one, and how publishers and subscribers log and test 
 - **Database writes and events stay together** — a transactional outbox closes the crash window in
   which a state change commits but the event announcing it is lost.
 - **Redelivery does not repeat side effects** — an inbox records what a consumer has already
-  processed, so a redelivered message is recognised rather than applied twice.
+  processed, so a redelivered message is recognised rather than processed twice.
 - **Two topics per service domain** — a subscriber finds any event type's topic from the type's
   name, and what customers may receive is approved apart from what only the platform may.
 - **Failures reach an owner** — every event a subscriber cannot handle ends in its subscription's
@@ -127,7 +127,7 @@ acknowledgement it did not receive, and a publisher's outbox may place one event
 
 [REQUIRED] A subscriber that applies changes to a record shall keep the `lastUpdatedAt` of the last
 change it applied for that record, and shall discard an event whose `lastUpdatedAt` is not later.
-An event that reports a fact rather than a state change is applied every time it is new.
+An event that reports a fact rather than a state change is processed every time it is new.
 *Rationale:* Redelivery, parallel pulls, outbox retries and several publishing pods each reorder
 events; the record's own `lastUpdatedAt`, written by one database, is the one order that holds.
 
@@ -148,7 +148,7 @@ use for.
 ### 2.6 Answer every event as handled, to be retried, or never to be handled.
 
 [REQUIRED] A subscriber shall answer each event it receives in one of three ways. It answers
-*handled* when it has applied the event or deliberately skipped it. It answers *retry* when the
+*handled* when it has done the work the event causes or deliberately skipped it. It answers *retry* when the
 event can succeed later, such as when a service it calls is unavailable; the platform then
 redelivers the event at the next attempt of its delivery schedule. The schedule is a fixed number
 of attempts at set times after the first delivery, and after the last attempt the event is
@@ -172,8 +172,8 @@ event is dead-lettered when it has been retried for the whole delivery schedule;
 with its body and headers intact, in the subscription's own dead-letter stream, and the platform
 publishes an event naming the subscription, the dead-lettered event's `eventId` and `type`, and
 the number of attempts. The owner finds the cause, fixes it, and has the event replayed by the
-Notification Service's operators. *Rationale:* A dead-lettered event is a fact the subscriber has
-not applied, and the owner is the one party that knows what applying it requires.
+Notification Service's operators. *Rationale:* A dead-lettered event is one whose work the
+subscriber has not done, and the owner is the one party that knows what that work requires.
 
 ### 2.8 Handle the events a new subscription starts with.
 
@@ -189,7 +189,7 @@ orders placed since the oldest event the topic holds, then each order as it is p
 
 [RECOMMENDED] A subscriber that needs events older than its topic holds, to build or rebuild its
 own state, should read them from the platform's event log (`GET /v1/events`), filtered by type,
-and apply them with the same checks as delivered events (2.2, 2.3). *Rationale:* The event log is
+and process them with the same checks as delivered events (2.2, 2.3). *Rationale:* The event log is
 the platform's one archive of every event, and a topic holds only its recent events.
 
 ## 3. Event types
@@ -362,7 +362,7 @@ to the next.
 
 [REQUIRED] The owner of an event subscription shall watch its oldest unacknowledged event's age,
 which the platform measures for every subscription. *Rationale:* A subscriber that falls behind
-delays every fact it has yet to apply, and the age of its oldest waiting event shows that before
+delays the work of every event it has yet to process, and the age of its oldest waiting event shows that before
 anything is dead-lettered.
 
 ## 6. Testing
@@ -392,6 +392,7 @@ its type's schema requires. *Rationale:* A type gains optional fields in later m
 
 ### 6.4 Test a handler with a repeated event and an out-of-date change.
 
-[REQUIRED] A subscriber shall test that its handler, given the same event twice, applies it once
-(2.2), and that, given a change older than one it has applied, discards it (2.3). *Rationale:* The
+[REQUIRED] A subscriber shall test that its handler, given the same event twice, does its work once
+(2.2), and that, given a change older than one it has already applied to the record, discards it
+(2.3). *Rationale:* The
 bus redelivers and reorders events in normal running, so these two cases occur in production.
