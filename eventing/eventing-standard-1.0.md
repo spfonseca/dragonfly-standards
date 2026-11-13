@@ -299,10 +299,10 @@ personal data only where a subscriber of the type acts on it. *Rationale:* Every
 the platform's event log and delivered to every subscriber of its topic, so whatever a payload
 holds is stored and copied beyond the record it came from.
 
-### 3.10 Keep each event within the publication limit of 1 MiB.
+### 3.10 Keep each event within the publication limit of 256 KiB.
 
 [REQUIRED] A publisher shall keep each event it publishes through the event facade
-(`POST /v1/events`), its payload and headers together, within 1 MiB (1,048,576 bytes). The facade
+(`POST /v1/events`), its payload and headers together, within 256 KiB (262,144 bytes). The facade
 refuses a larger event with `400` `payload-too-large` and records nothing. *Rationale:* The limit
 is checked when the event is published, so every event the facade accepts reaches each subscriber
 whole.
