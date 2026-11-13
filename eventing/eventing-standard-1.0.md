@@ -302,7 +302,8 @@ holds is stored and copied beyond the record it came from.
 ### 3.10 Keep each event within the bus's maximum message size.
 
 [REQUIRED] A publisher shall keep each event, its payload and headers together, within the event
-bus's maximum message size. The facade refuses a larger event with `400` `payload-too-large` and records nothing.
+bus's maximum message size of 1 MiB (1,048,576 bytes). The facade refuses a larger event with `400`
+`payload-too-large` and records nothing.
 *Rationale:* The bus delivers a message whole or not at all, so the size limit is checked where
 the event is accepted.
 
