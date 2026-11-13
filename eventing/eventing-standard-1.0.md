@@ -26,7 +26,7 @@ architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY, SECURITY,
 |---|---|
 | **Short Name** | EVENT |
 | **Version** | 1.0 |
-| **Status** | Draft |
+| **Status** | Published |
 | **Author** | Steven Fonseca |
 | **Last Updated** | 2026-11-12 |
 
