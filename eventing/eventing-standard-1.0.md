@@ -289,7 +289,7 @@ class decides which organizations may ever subscribe, and it is part of the type
 a type to the other class creates a new type.
 
 *Example:* `ordmgt.public.order.placed.1` is public, because a customer's service consumer acts on
-its orders. `notify.private.event-subscription.dead-lettered.1` is private, because it reports how
+its orders. `comms.private.event-subscription.dead-lettered.1` is private, because it reports how
 the platform's delivery is running.
 
 ### 3.9 Carry no secret, and only the personal data a subscriber acts on.
