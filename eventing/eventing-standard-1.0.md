@@ -321,6 +321,18 @@ description "An approver has approved an expense, and it is ready for reimbursem
 payload property `approvedById` described as "The user who approved the expense". A developer
 browsing the Developer Portal finds it under expense management's `expmgt.public` topic.
 
+### 3.12 Deprecate a major version at least 6 months before retiring it.
+
+[REQUIRED] An event type replaced by a new major version shall be deprecated, with its deprecation
+and retirement dates set for that type, and shall be retired no sooner than 6 months after it is
+deprecated. Both majors are published side by side until the old one retires. *Rationale:* A new
+major is a new event type, and each subscriber of the old one needs time to move its handling and
+its subscription's filters to the new one.
+
+*Example:* `ordmgt.public.order.placed.2` is registered on 2027-01-15, and
+`ordmgt.public.order.placed.1` is deprecated that day with a retirement date of 2027-07-15. Order
+management publishes both until then.
+
 ## 4. Topics
 
 ### 4.1 Give each service domain a public topic and a private topic.
