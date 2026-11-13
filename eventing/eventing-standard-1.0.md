@@ -299,13 +299,13 @@ personal data only where a subscriber of the type acts on it. *Rationale:* Every
 the platform's event log and delivered to every subscriber of its topic, so whatever a payload
 holds is stored and copied beyond the record it came from.
 
-### 3.10 Keep each event within the bus's maximum message size.
+### 3.10 Keep each event within the publication limit of 1 MiB.
 
-[REQUIRED] A publisher shall keep each event, its payload and headers together, within the event
-bus's maximum message size of 1 MiB (1,048,576 bytes). The facade refuses a larger event with `400`
-`payload-too-large` and records nothing.
-*Rationale:* The bus delivers a message whole or not at all, so the size limit is checked where
-the event is accepted.
+[REQUIRED] A publisher shall keep each event it publishes through the event facade
+(`POST /v1/events`), its payload and headers together, within 1 MiB (1,048,576 bytes). The facade
+refuses a larger event with `400` `payload-too-large` and records nothing. *Rationale:* The limit
+is checked when the event is published, so every event the facade accepts reaches each subscriber
+whole.
 
 ### 3.11 Document a type for the subscriber deciding whether to subscribe.
 
