@@ -28,7 +28,7 @@ industryReferences:
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-10-10 |
+| **Last Updated** | 2026-11-17 |
 
 ## Purpose
 
@@ -220,6 +220,20 @@ one organization at a time cannot combine two tenants' data.
 is deciding to show it to everyone admitted, and how that is stated.
 
 *Rationale:* Placeholder for authored text.
+
+### 5.5 Treat a name unique across an organization as known to every member acting in it.
+
+[REQUIRED] A name that an organization requires to be unique across the organization is known to
+every member acting in it. A create or a rename that asks for a name already in use is refused
+with a conflict to every caller acting in the organization, whether or not the caller may see the
+record that holds the name. The response states the name the caller sent and that it is in use.
+The record that holds the name stays closed: its id, its owner, its state and its contents are
+answered only through a fact, as every read is. A member with no visibility of the functional
+requirements set `DISP` who creates a set with the short name `DISP` is told that `DISP` is in
+use, and that member's `GET` of the set that holds it is answered 404.
+
+*Rationale:* A name unique across an organization is how its members refer to the record, and a
+uniqueness rule shows a member which names are taken on the first refused create.
 
 ## 6. Where Checks Run
 
