@@ -1016,6 +1016,10 @@ The response is the collection envelope (§15.1) with a groups attribute in plac
 
 [REQUIRED] A write whose precondition was checked and then overtaken shall answer deterministically, never with a 5xx: if the resource was changed by another write after this request read it, 412 (§12.13); if the resource was deleted after this request read it, 404 (§12.10); a DELETE that finds the resource already gone answers 404 (§9.4). The version check and the write shall be atomic — one statement or one transaction — so no interleaving produces a lost update or a half-applied change. *Rationale:* Concurrent edits are normal in a multi-user system; a stable, documented outcome lets a client recover (reload and retry, or return to the list) where an internal error leaves it guessing.
 
+### 17.11 Answer every successful write with the new ETag of what it changed.
+
+[REQUIRED] A successful write to a resource that supports conditional writes (§17.7) shall answer with the new ETag of the resource it changed. A write to a sub-resource — its PUT, PATCH, POST or DELETE — changes its parent, and shall answer with the parent's new ETag; a DELETE, which answers 200, carries it too. *Rationale:* A client that writes again with If-Match needs the current ETag; a write that answers none sends the client back to read the resource only to learn it, which doubles the requests of every multi-step save. *Example:* `DELETE /v1/standards/{standardId}/requirements/{requirementId}` answers `200` with `ETag: "a91f…"`, the standard's new ETag, and the client's next `PATCH /v1/standards/{standardId}` carries `If-Match: "a91f…"` without reading the standard first.
+
 ## 18. Resource Expansion and Omission
 
 ### 18.1 Optionally expand referenced top-level resources, one level deep, on GET only.
