@@ -6,6 +6,7 @@ description: >-
   envelope, delivery, failure and dead-lettering, and how events are logged and tested.
 adoptionMetrics:
   - Share of event types whose names follow the five-token grammar
+  - Share of top-level resources that publish both `created` and `deleted`
   - Share of services publishing alongside a database write that use a transactional outbox
   - Share of consumers with non-idempotent side effects that record consumed message identities
   - Share of event types whose payload schema describes every property
@@ -28,7 +29,7 @@ architectureQualities: [RELIABILITY, INTEROPERABILITY, RECOVERABILITY, SECURITY,
 | **Version** | 1.0 |
 | **Status** | Published |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-11-12 |
+| **Last Updated** | 2026-11-18 |
 
 ## Purpose
 
@@ -109,6 +110,43 @@ and returns its answer.
 *Example:* Expense management publishes `expmgt.public.expense.approved.1` when an expense is
 approved, and the payment service and the Notification Service each react to it. To learn an
 employee's cost centre before approving, expense management calls the organization service's API.
+
+### 1.5 Publish `created` and `deleted` for every top-level resource.
+
+[REQUIRED] A service shall publish an event when an instance of each of its top-level resources
+comes to exist, `<domain>.<class>.<resource>.created.<major>`, and when one is removed,
+`<domain>.<class>.<resource>.deleted.<major>`. The payload names the instance and its organization.
+*Rationale:* Another service that keeps a record for each instance of a resource creates and
+removes that record on these two events, and a resource that publishes them can gain such a
+subscriber without its publisher changing.
+
+*Example:* The Identity and Organization Service publishes `ident.private.organization.created.1`
+when an organization comes to exist. The Notification Service, the AI Models Service and the
+Software Engineering Plan Service each write that organization's settings when they receive it.
+
+### 1.6 Publish an event from every path that makes its fact true.
+
+[REQUIRED] A service shall publish an event whenever its fact becomes true, whichever path made it
+true: an API call, a backend job, a reconciler or an import. *Rationale:* A subscriber relies on
+the event, not on the path, and a fact made true by a path that publishes nothing is a fact the
+subscriber never learns.
+
+*Example:* An organization comes to exist when a person signs up, when the identity service's
+reconciler finds it in the identity provider, or when an operator imports it. Each of the three
+publishes `ident.private.organization.created.1`.
+
+### 1.7 Agree every other event type in the resource's design.
+
+[REQUIRED] Every event type beyond `created` and `deleted` shall be part of the resource's agreed
+design, named for the business fact it reports (§3.6) and shaped for the workflow that subscribes
+to it (§3.7). A service shall never publish an event for each successful API call. *Rationale:* An
+event for each call mirrors the API rather than the business: subscribers come to depend on how
+the endpoints are divided, and an event saying only that a record changed sends each subscriber
+back to read what changed.
+
+*Example:* Expense management's design lists `expmgt.public.expense.approved.1` and
+`expmgt.public.expense.reimbursed.1` beside `created` and `deleted`. A change to an expense's
+description publishes nothing.
 
 
 ## 2. Consuming
