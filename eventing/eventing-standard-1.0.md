@@ -7,6 +7,7 @@ description: >-
 adoptionMetrics:
   - Share of event types whose names follow the five-token grammar
   - Share of top-level resources that publish both `created` and `deleted`
+  - Share of lifecycle resources that publish an event for every change of state
   - Share of services publishing alongside a database write that use a transactional outbox
   - Share of consumers with non-idempotent side effects that record consumed message identities
   - Share of event types whose payload schema describes every property
@@ -124,7 +125,21 @@ subscriber without its publisher changing.
 when an organization comes to exist. The Notification Service, the AI Models Service and the
 Software Engineering Plan Service each write that organization's settings when they receive it.
 
-### 1.6 Publish an event from every path that makes its fact true.
+### 1.6 Publish an event for every change of state of a resource with a lifecycle.
+
+[REQUIRED] A top-level resource whose design enumerates its states shall publish one event for each
+change from one state to another, named in the past tense for entering the state:
+`<domain>.<class>.<resource>.<event>.<major>`. The payload names the instance, its
+organization, the state it left, the state it entered and its `lastUpdatedAt` (§3.3). *Rationale:*
+A state is a business fact the resource's design already names, and a subscriber that acts on a
+transition learns of it from the one event, without reading the record back (§3.7).
+
+*Example:* A functional requirements set moves from DRAFT to APPROVED, from APPROVED to
+IN_REVISION and back to APPROVED. The Product Design and Development Service publishes
+`prddes.public.functional-requirements-set.approved.1` on each move into APPROVED and
+`prddes.public.functional-requirements-set.revision-started.1` on each move into IN_REVISION.
+
+### 1.7 Publish an event from every path that makes its fact true.
 
 [REQUIRED] A service shall publish an event whenever its fact becomes true, whichever path made it
 true: an API call, a backend job, a reconciler or an import. *Rationale:* A subscriber relies on
@@ -135,18 +150,18 @@ subscriber never learns.
 reconciler finds it in the identity provider, or when an operator imports it. Each of the three
 publishes `ident.private.organization.created.1`.
 
-### 1.7 Agree every other event type in the resource's design.
+### 1.8 Agree every other event type in the resource's design.
 
-[REQUIRED] Every event type beyond `created` and `deleted` shall be part of the resource's agreed
-design, named for the business fact it reports (§3.6) and shaped for the workflow that subscribes
+[REQUIRED] Every event type beyond `created`, `deleted` and the changes of state of §1.6 shall be
+part of the resource's agreed design, named for the business fact it reports (§3.6) and shaped for the workflow that subscribes
 to it (§3.7). A service shall never publish an event for each successful API call. *Rationale:* An
 event for each call mirrors the API rather than the business: subscribers come to depend on how
 the endpoints are divided, and an event saying only that a record changed sends each subscriber
 back to read what changed.
 
-*Example:* Expense management's design lists `expmgt.public.expense.approved.1` and
-`expmgt.public.expense.reimbursed.1` beside `created` and `deleted`. A change to an expense's
-description publishes nothing.
+*Example:* Expense management's design lists `expmgt.public.expense.over-budget.1`, published when
+an expense takes its cost centre past its budget, beside `created`, `deleted` and the expense's
+changes of state. A change to an expense's description publishes nothing.
 
 
 ## 2. Consuming
