@@ -6,7 +6,7 @@ description: >-
   envelope, delivery, failure and dead-lettering, and how events are logged and tested.
 adoptionMetrics:
   - Share of event types whose names follow the five-token grammar
-  - Share of top-level resources that publish both `created` and `deleted`
+  - Share of top-level resources that publish `created`, and `deleted` where they can be removed
   - Share of lifecycle resources that publish an event for every change of state
   - Share of services publishing alongside a database write that use a transactional outbox
   - Share of consumers with non-idempotent side effects that record consumed message identities
@@ -112,18 +112,24 @@ and returns its answer.
 approved, and the payment service and the Notification Service each react to it. To learn an
 employee's cost centre before approving, expense management calls the organization service's API.
 
-### 1.5 Publish `created` and `deleted` for every top-level resource.
+### 1.5 Publish `created` for every top-level resource, and `deleted` for every one that can be removed.
 
 [REQUIRED] A service shall publish an event when an instance of each of its top-level resources
-comes to exist, `<domain>.<class>.<resource>.created.<major>`, and when one is removed,
-`<domain>.<class>.<resource>.deleted.<major>`. The payload names the instance and its organization.
-*Rationale:* Another service that keeps a record for each instance of a resource creates and
-removes that record on these two events, and a resource that publishes them can gain such a
-subscriber without its publisher changing.
+comes to exist, `<domain>.<class>.<resource>.created.<major>`. For each top-level resource that can
+be removed, it shall also publish one when an instance is removed,
+`<domain>.<class>.<resource>.deleted.<major>`. A resource that is never removed ends by a state
+instead, such as RETIRED, WITHDRAWN, EXPIRED or REVOKED: it declares no `deleted` type, and the
+event for entering that state (§1.6) announces its end. The payload names the instance and its
+organization. *Rationale:* Another service that keeps a record for each instance of a resource
+creates and removes that record on these events, and a resource that publishes them can gain such a
+subscriber without its publisher changing; a `deleted` type that can never fire tells a subscriber
+that removal can happen.
 
 *Example:* The Identity and Organization Service publishes `ident.private.organization.created.1`
 when an organization comes to exist. The Notification Service, the AI Models Service and the
-Software Engineering Plan Service each write that organization's settings when they receive it.
+Software Engineering Plan Service each write that organization's settings when they receive it. A
+service subscription in Software Engineering Design is never removed: it ends REVOKED, publishes
+`sweng.private.service-subscription.revoked.1`, and declares no `deleted` type.
 
 ### 1.6 Publish an event for every change of state of a resource with a lifecycle.
 
@@ -152,8 +158,8 @@ publishes `ident.private.organization.created.1`.
 
 ### 1.8 Agree every other event type in the resource's design.
 
-[REQUIRED] Every event type beyond `created`, `deleted` and the changes of state of §1.6 shall be
-part of the resource's agreed design, named for the business fact it reports (§3.6) and shaped for the workflow that subscribes
+[REQUIRED] Every event type beyond `created`, `deleted` where §1.5 requires it, and the changes of state of
+§1.6 shall be part of the resource's agreed design, named for the business fact it reports (§3.6) and shaped for the workflow that subscribes
 to it (§3.7). A service shall never publish an event for each successful API call. *Rationale:* An
 event for each call mirrors the API rather than the business: subscribers come to depend on how
 the endpoints are divided, and an event saying only that a record changed sends each subscriber
