@@ -180,9 +180,9 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 [REQUIRED] Every resource shall be directly addressable by a stable URL, without prior navigation or session context; URLs are permanent — never recycled or repurposed for a different resource — and instance identifiers shall be unique and conform to UUID (RFC 4122). *Rationale:* Permanent, directly addressable identifiers keep references stable across distributed systems and prevent one resource's identity from silently becoming another's.
 
-### 4.2 Represent all character-based interactions as JSON.
+### 4.2 Represent all character-based interactions as JSON, with text representations where a resource has a natural text form.
 
-[REQUIRED] All character-based request and response content shall be represented as JSON (application/json). *Rationale:* A single mandatory representation guarantees any client can interoperate without bespoke encoding.
+[REQUIRED] All character-based request content, and every response's default representation, shall be JSON (application/json). A resource read may additionally offer `text/plain`, `text/markdown` and `text/vnd.mermaid`, chosen by Accept (§10.3), where the resource has a natural text form — a description, a document, a diagram. *Rationale:* JSON as the one mandatory representation guarantees any client can interoperate without bespoke encoding; a text form offered beside it serves a reader or a renderer that wants the text itself, without a second resource that has to be kept in step with the first. *Example:* `GET /v1/diagrams/{diagramId}` with `Accept: text/vnd.mermaid` returns the diagram as Mermaid text.
 
 ### 4.3 Expose only the approved uniform verb set.
 
@@ -484,7 +484,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 10.3 Use Accept to negotiate the response representation.
 
-[REQUIRED] Request. Accept states the representation the client wants: representations are returned as application/json, and the metadata endpoints (§8.9) return JSON or HTML at the client's choice; when Accept is absent, JSON is returned. *Rationale:* Standard negotiation lets any client obtain a representation it can process without out-of-band agreement.
+[REQUIRED] Request. Accept states the representation the client wants: representations are returned as application/json, or in a text form the resource offers (§4.2), and the metadata endpoints (§8.9) return JSON or HTML at the client's choice; when Accept is absent, JSON is returned. An Accept naming only representations the resource does not offer is answered 406 (§12.21). *Rationale:* Standard negotiation lets any client obtain a representation it can process without out-of-band agreement.
 
 ### 10.4 Use Accept-Charset to declare UTF-8.
 
@@ -716,10 +716,15 @@ and release notes — and is addressed on the collection rather than an instance
 | `permission-denied` | 403 | Authenticated but not authorized (§12.9) |
 | `not-found` | 404 | No resource at the location (§12.10); APIs may declare resource-specific `<resource>-not-found` types instead |
 | `method-not-allowed` | 405 | Verb not supported at the path (§12.11) |
+| `not-acceptable` | 406 | Accept names no representation the resource offers (§12.21) |
 | `precondition-failed` | 412 | Conditional-write precondition stale or missing (§12.13, §17.7) |
 | `rate-limit-exceeded` | 429 | Rate limit exceeded (§12.14) |
 | `internal-error` | 500 | Uncovered server-side failure (§12.15) |
 | `service-unavailable` | 503 | Capacity shortfall (§12.16) |
+
+### 12.21 Use 406 Not Acceptable when Accept names no representation the resource offers.
+
+[REQUIRED] 406 is returned, with the `not-acceptable` problem type, when every representation an Accept header names is one the resource does not offer (§4.2, §10.3). *Rationale:* A plain refusal tells the client to ask for JSON or for a text form the resource lists, rather than receiving a representation it did not ask for.
 
 ## 13. Security
 
