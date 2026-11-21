@@ -185,7 +185,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 [REQUIRED] All character-based request content, and every response's default representation, shall be JSON (application/json). A resource read may also offer, chosen by Accept (§10.3):
 
 - `text/plain`, `text/markdown` or `text/vnd.mermaid`, where the resource has a natural text form.
-- A diagram's model representation (§4.18).
+- A diagram's model representation, which every diagram offers (§4.18).
 
 *Rationale:* JSON guarantees that every client can interoperate, and the other forms serve consumers that want them without a second resource kept in step. *Example:* `GET /v1/diagrams/{diagramId}` with `Accept: text/vnd.mermaid` returns Mermaid text.
 
@@ -251,7 +251,7 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 ### 4.18 Offer a diagram's model as a model representation.
 
-[RECOMMENDED] A diagram resource may offer the model it holds as `application/vnd.<custom name>.<model type>+json`.
+[REQUIRED] A diagram resource shall offer the model it holds as `application/vnd.<custom name>.<model type>+json`.
 
 - The custom name is §10.2's reserved prefix.
 - The model type is its diagram type's `modelType`, written like a `resourceType` (§7.9) and fixed in the catalog.
