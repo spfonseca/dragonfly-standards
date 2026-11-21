@@ -180,9 +180,14 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 [REQUIRED] Every resource shall be directly addressable by a stable URL, without prior navigation or session context; URLs are permanent — never recycled or repurposed for a different resource — and instance identifiers shall be unique and conform to UUID (RFC 4122). *Rationale:* Permanent, directly addressable identifiers keep references stable across distributed systems and prevent one resource's identity from silently becoming another's.
 
-### 4.2 Represent all character-based interactions as JSON, with text representations where a resource has a natural text form.
+### 4.2 Represent all character-based interactions as JSON, with text and model representations where a resource has a natural form for them.
 
-[REQUIRED] All character-based request content, and every response's default representation, shall be JSON (application/json). A resource read may additionally offer `text/plain`, `text/markdown` and `text/vnd.mermaid`, chosen by Accept (§10.3), where the resource has a natural text form — a description, a document, a diagram. *Rationale:* JSON as the one mandatory representation guarantees any client can interoperate without bespoke encoding; a text form offered beside it serves a reader or a renderer that wants the text itself, without a second resource that has to be kept in step with the first. *Example:* `GET /v1/diagrams/{diagramId}` with `Accept: text/vnd.mermaid` returns the diagram as Mermaid text.
+[REQUIRED] All character-based request content, and every response's default representation, shall be JSON (application/json). A resource read may also offer, chosen by Accept (§10.3):
+
+- `text/plain`, `text/markdown` or `text/vnd.mermaid`, where the resource has a natural text form.
+- A diagram's model representation (§4.18).
+
+*Rationale:* JSON guarantees that every client can interoperate, and the other forms serve consumers that want them without a second resource kept in step. *Example:* `GET /v1/diagrams/{diagramId}` with `Accept: text/vnd.mermaid` returns Mermaid text.
 
 ### 4.3 Expose only the approved uniform verb set.
 
@@ -243,6 +248,32 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 ### 4.17 Use `/batch` for the batch equivalent of a resource's own operations.
 
 [REQUIRED] Where a resource needs an operation applied to many records at once, it shall be offered as `/batch` — the last path segment on the resource collection — taking the resource's **own verbs**: `POST /v1/<resource>/batch` creates many, `PATCH /v1/<resource>/batch` changes many, `DELETE /v1/<resource>/batch` removes many. Each shall apply **all or none** within a single transaction, and shall report the member that caused a refusal. A batch endpoint carries no semantics its single-record form does not: it is not a replacement of the collection, it does not create on PATCH, and a caller wanting the collection in a given end state issues the operations that differ. `DELETE /v1/<resource>/batch` carries its identifiers in a **request body** — deliberate, since a set that may run to dozens does not belong in a query string — and every gateway, proxy and client on the path shall forward that body rather than stripping it, which RFC 9110 permits but this platform does not. `batch` is a reserved segment on every resource collection: no instance identifier may take that value, which is already true while identifiers are UUIDs (§16.2). It is a **special case of the Entity API** (§4.13) — the same CRUD on the same resource, differing only in how many instances one call touches — and not a Task API (§4.15), which performs a business action and is POST only. It therefore carries `x-api-type: ENTITY` and requires the service's write scope by the ordinary rule (§13.8), with no new API type and no exception to the scope rule. A resource shall offer a batch form only where a caller genuinely needs the members to land together; one offered for convenience duplicates the single-record API at twice the surface. *Rationale:* Batch operations were previously left to each service to invent, which produced endpoints whose atomicity, partial-failure behaviour and naming a consumer had to learn per resource; naming them `/batch` with the resource's own verbs makes the shape predictable, keeps the entity model undistorted, and states the one property a caller cannot infer — that the set lands together or not at all. *Example:* `POST /v1/application-tools/batch` publishing the tools of one release, refused whole if any one of them names an effect its prefix contradicts.
+
+### 4.18 Offer a diagram's model as a model representation.
+
+[RECOMMENDED] A diagram resource may offer the model it holds as `application/vnd.<custom name>.<model type>+json`.
+
+- The custom name is §10.2's reserved prefix.
+- The model type is its diagram type's `modelType`, written like a `resourceType` (§7.9) and fixed in the catalog.
+- The body holds the model's records only, each in the schema of the resource that defines it, under that resource's plural name in lowerCamelCase.
+- It is offered on the diagram and on each of its past revisions.
+
+*Rationale:* A consumer that takes in a diagram's model reads it in schemas it already knows, without learning how the diagram stores or draws it.
+
+*Example:* A Data Model diagram, whose type has `"modelType": "data-model"`, read with `Accept: application/vnd.dragonfly.data-model+json`, returns:
+
+```json
+{"objectOrientedClasses": [
+  {"objectOrientedClassId": "0d1f5c2e-…", "name": "PurchaseOrder", "abstract": false,
+   "attributes": [{"attributeId": "a1b2c3d4-…", "name": "orderNumber", "primitiveType": "STRING"}]},
+  …]}
+```
+
+### 4.19 Publish the schema of every model representation.
+
+[REQUIRED] Each model representation (§4.18) shall have a JSON Schema, draft 2020-12, served as `application/schema+json` at `<diagram type instance URL>/data-schema`. The diagram type lists the media type among its representations, and the schema embeds each record schema it uses.
+
+*Rationale:* Consumers validate against the published schema, not a copy of their own, and there is one schema per diagram type. *Example:* `GET /v1/diagram-types/{diagramTypeId}/data-schema` returns the schema of `application/vnd.dragonfly.data-model+json`.
 
 ## 5. Resilience
 
@@ -492,7 +523,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 10.3 Use Accept to negotiate the response representation.
 
-[REQUIRED] Request. Accept states the representation the client wants: representations are returned as application/json, or in a text form the resource offers (§4.2), and the metadata endpoints (§8.9) return JSON or HTML at the client's choice; when Accept is absent, JSON is returned. An Accept naming only representations the resource does not offer is answered 406 (§12.21). *Rationale:* Standard negotiation lets any client obtain a representation it can process without out-of-band agreement.
+[REQUIRED] Request. Accept states the representation the client wants: JSON, a text form (§4.2) or a diagram's model representation (§4.18). The metadata endpoints (§8.9) return JSON or HTML. When Accept is absent, JSON is returned, and an Accept naming only representations the resource does not offer is answered 406 (§12.21). *Rationale:* Standard negotiation lets any client obtain a representation it can process.
 
 ### 10.4 Use Accept-Charset to declare UTF-8.
 
