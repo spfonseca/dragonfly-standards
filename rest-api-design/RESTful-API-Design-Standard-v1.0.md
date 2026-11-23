@@ -903,7 +903,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 15.5 Accept complex queries through the q OData parameter.
 
-[RECOMMENDED] Complex queries are expressed via q using OData $filter syntax, restricted to the inexpensive subset defined by the grammar below and applied only to the query parameters the API already exposes for individual pass-in. q shall not be combined with domain query parameters (those qualifying the resource, e.g. name), though system parameters like page/pageSize and sort may accompany it, as may groupBy and sum (§15.9). *Rationale:* The subset keeps every predicate index-friendly and cheap to evaluate while retaining the grouping and cross-field OR that individual parameters cannot express.
+[RECOMMENDED] Complex queries are expressed via q using OData $filter syntax, restricted to the inexpensive subset defined by the grammar below and applied only to the query parameters the API already exposes for individual pass-in. q shall not be combined with domain query parameters (those qualifying the resource, e.g. name), though system parameters like page/pageSize and sort may accompany it, as may groupBy, sum and percentile (§15.9). *Rationale:* The subset keeps every predicate index-friendly and cheap to evaluate while retaining the grouping and cross-field OR that individual parameters cannot express.
 
 Expressions are bounded in three ways. Nesting shall not exceed 3 levels of parenthesized grouping, keeping expressions readable and evaluation predictable. An expression shall contain at most 10 predicates, capping the total work a single query can demand. An in-list shall contain at most 20 values, keeping membership tests cheap. An expression exceeding any of these bounds, or referencing any other field, is rejected with 400.
 
@@ -953,9 +953,13 @@ a caller that cannot see which fields are theirs will get it wrong in both direc
 
 ### 15.9 Answer grouped counts through the groupBy parameter.
 
-[REQUIRED] Every collection that has a groupable field shall answer with counts per group instead of its elements when requested via groupBy with syntax `<field>[":"<period>]{"|"<field>[":"<period>]}`. Each field shall be one the API exposes to q (§15.5), and shall be an enumeration (§16.4), an identifier (§16.7), a country code (§16.8), or a date; a date field shall name the period it is grouped by, one of `day`, `week`, `month`, `quarter` or `year`, and no other field shall name one. At most two fields may be named. Where sum names a numeric field the API exposes to q, each group carries that field's total in place of its count, in the field's own representation (§16.4). The grouping applies to exactly the elements the request would otherwise return — after q, and only those the caller is authorized to read (§13.3) — so a count can never disclose an element its caller could not open. Such a collection shall therefore also support q (§15.5). A collection with no groupable field — one with no individual filters, or none of those kinds — is exempt. A request naming more than two fields, a field not exposed to q, a period on a non-date field or a date field without one is rejected with 400. *Rationale:* A chart over a collection needs counts per state, per owner or per month, and counting in the client is correct over one page and quietly wrong over the rest; a parameter on the collection reuses its filter and its authorization rather than duplicating both in a separate reporting endpoint, and binding the grouped fields to those already exposed to q keeps every grouping as cheap as the filter it follows. A collection with nothing to group by — a user's sessions, an organization's email domains — has no chart to serve, so requiring it to invent filters would add surface for no reader.
+[REQUIRED] Every collection that has a groupable field shall answer with counts per group instead of its elements when requested via groupBy with syntax `<field>[":"<period>]{"|"<field>[":"<period>]}`. Each field shall be one the API exposes to q (§15.5), and shall be an enumeration (§16.4), an identifier (§16.7), a country code (§16.8), or a date; a date field shall name the period it is grouped by, and no other field shall name one. At most two fields may be named, and a date field may be named twice with two different periods. The grouping applies to exactly the elements the request would otherwise return — after q, and only those the caller is authorized to read (§13.3) — so a count can never disclose an element its caller could not open. Such a collection shall therefore also support q (§15.5). A collection with no groupable field — one with no individual filters, or none of those kinds — is exempt. A request naming more than two fields, a field not exposed to q, a period on a non-date field, a date field without one, or one field twice with the same period is rejected with 400. *Rationale:* A chart over a collection needs counts per state, per owner or per month, and counting in the client is correct over one page and quietly wrong over the rest; a parameter on the collection reuses its filter and its authorization rather than duplicating both in a separate reporting endpoint, and binding the grouped fields to those already exposed to q keeps every grouping as cheap as the filter it follows. A collection with nothing to group by — a user's sessions, an organization's email domains — has no chart to serve, so requiring it to invent filters would add surface for no reader.
 
-The response is the collection envelope (§15.1) with a groups attribute in place of items. Each group carries a key holding the value of each grouped field — omitted where the elements have none (§16.6) — and its count or sum. Groups are ordered by key unless sort names `count` or `sum`; page and pageSize page the groups, and Example-Result-Set-Count (§15.4) carries the number of groups. *Examples:*
+A period is one of `day`, `week`, `month`, `quarter`, `year`, `weekday` or `hour`. The periods `day` to `year` place an element in the calendar period that contains it, and a week begins on Monday. The period `weekday` places an element in its day of the week, and `hour` places it in its hour of the day, across every week the request selects. Every period is evaluated at the UTC offset the API contract documents for the date field, and at UTC where the contract documents none. An API documents an offset for a date field where each element records the offset beside the date: a commit records its author's offset, so `committedAt:hour` places a commit with `committedAt` `2026-11-22T02:30:00Z` and offset `-05:00` in hour 21, the hour its author wrote it. *Rationale:* A question about when work happens is a question about its author's day, and that day is visible only at the offset the author was at.
+
+Each group carries one aggregate. With no aggregate parameter, each group carries `count`, the number of its elements. The parameter sum, with syntax `<field>`, names a numeric field the API exposes to q, and each group carries `sum`, the field's total over the group's elements. The parameter percentile, with syntax `<field>":"<p>`, names a numeric field the API exposes to q and a whole number p from 1 to 99, and each group carries `percentile`, the smallest value of the field that at least p percent of the group's elements are at or below; `percentile=timeToMerge:50` gives each group's median time to merge. A sum and a percentile are each written in the field's own representation (§16.4), and a percentile is always a value one of the group's elements holds. An element with no value for the field is left out of the sum or percentile, and a group in which no element has a value carries no sum or percentile (§16.6). A request naming both sum and percentile, a field that is not numeric or not exposed to q, a p outside 1 to 99, or either parameter without groupBy is rejected with 400. *Rationale:* A total and a typical value answer the two questions a chart asks of a measure, and choosing the percentile from the elements keeps an integer field an integer.
+
+The response is the collection envelope (§15.1) with a groups attribute in place of items. Each group carries a key and its `count`, `sum` or `percentile`. The key holds the value of each grouped field under the field's name, omitted where the elements have none (§16.6). Where a date field is named twice, the key holds each of its values under `<field>:<period>`, as in `"committedAt:weekday"`. A date field's value takes its period's form: `day` to `year` give the date the period begins (§16.3), as in `2026-11-01` for November 2026; `weekday` gives the enumeration `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY` or `SUNDAY` (§16.4); and `hour` gives an integer from 0 to 23 (§16.4). Groups are ordered by key, with weekdays in order from `MONDAY` to `SUNDAY`, unless sort names `count`, `sum` or `percentile`; page and pageSize page the groups, and Example-Result-Set-Count (§15.4) carries the number of groups. *Examples:*
 
 | Query | Meaning |
 |---|---|
@@ -964,6 +968,8 @@ The response is the collection envelope (§15.1) with a groups attribute in plac
 | `?groupBy=createdAt:month&q=createdAt ge '2025-11-01T00:00:00Z'` | Elements created per month over the last year |
 | `?groupBy=ownerId&sort=-count&pageSize=10` | The ten owners with the most elements |
 | `?groupBy=country&sum=headcount` | Total headcount per country |
+| `?groupBy=committedAt:weekday\|committedAt:hour` | Commits per hour of each day of the week, in each author's own day |
+| `?groupBy=mergedAt:week&percentile=timeToMerge:50` | Median time to merge of the pull requests merged each week |
 
 ```json
 {
@@ -972,6 +978,26 @@ The response is the collection envelope (§15.1) with a groups attribute in plac
     { "key": { "likelihood": "RARE", "impact": "MINOR" }, "count": 3 },
     { "key": { "likelihood": "RARE", "impact": "MAJOR" }, "count": 1 },
     { "key": { "impact": "MINOR" }, "count": 2 }
+  ]
+}
+```
+
+```json
+{
+  "_links": { "self": { "href": "https://api.example.com/v1/commits?groupBy=committedAt:weekday|committedAt:hour" } },
+  "groups": [
+    { "key": { "committedAt:weekday": "MONDAY", "committedAt:hour": 9 }, "count": 31 },
+    { "key": { "committedAt:weekday": "MONDAY", "committedAt:hour": 10 }, "count": 44 }
+  ]
+}
+```
+
+```json
+{
+  "_links": { "self": { "href": "https://api.example.com/v1/pull-requests?groupBy=mergedAt:week&percentile=timeToMerge:50" } },
+  "groups": [
+    { "key": { "mergedAt": "2026-11-09" }, "percentile": 15840 },
+    { "key": { "mergedAt": "2026-11-16" }, "percentile": 9120 }
   ]
 }
 ```
