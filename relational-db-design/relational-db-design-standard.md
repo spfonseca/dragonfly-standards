@@ -266,12 +266,17 @@ mechanical mapping needs no lookup table and cannot drift. *Example:* `firstName
 
 ### 9.1 Use a bounded connection pool, budgeted against the instance.
 
-[REQUIRED] Every service uses a bounded connection pool; pool size and overflow are declared in
-service configuration, and the sum across all services shall fit the environment's published
-connection budget, which the platform maintains. The platform defaults are pool 2 + overflow 3
-per service instance in non-production, and pool 5 + overflow 5 in production. *Rationale:*
-Connections are the shared instance's scarcest resource; framework defaults exhaust a small
-instance with two services, where budgeted declarations keep every addition accountable.
+[REQUIRED] Every service uses a bounded connection pool. Each service declares its pool in its
+entry in the product's platform configuration: the connections each server process opens at start
+and keeps (`db_pool_size`), and the further connections it may open while every pooled one is in use
+(`db_max_overflow`). A service that declares neither runs a pool of 2 with an overflow of 3. A
+service whose bursts are known declares a pool that covers them and an overflow of 0, so a burst
+never waits for a connection to be opened. Each process holds its own pool, so a service opens up to
+replicas × processes per replica × (pool + overflow) connections, and the platform fails the plan
+when that sum over every service, with the platform's own consumers, does not fit the instance's
+`max_connections`. *Rationale:* Connections are the shared instance's scarcest resource; framework
+defaults exhaust a small instance with two services, where budgeted declarations keep every addition
+accountable, and an overflow connection opened in a burst costs that burst the time to open it.
 
 ### 9.2 Set a 4-second statement timeout on every connection.
 
