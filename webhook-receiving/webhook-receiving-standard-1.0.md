@@ -2,15 +2,15 @@
 shortName: WHREC
 description: >-
   How the platform receives webhooks from third-party providers: the one receiving service per
-  provider, the gateway route, signature checks, replay and duplicate deliveries, answering fast,
-  tenancy, broadcasting, recovering missed deliveries, secrets, logging and testing.
+  provider, the gateway route, proving a delivery's origin, replay and duplicate deliveries,
+  answering fast, tenancy, broadcasting, recovering missed deliveries, secrets, logging and testing.
 adoptionMetrics:
-  - Share of webhook endpoints that check every delivery's signature before any other work
+  - Share of webhook endpoints that prove every delivery's origin before any other work
   - Share of webhook endpoints served through a declared webhook route at the gateway
   - Share of providers whose deliveries reach other services only as broadcast events
   - Share of providers with a reconciliation for missed deliveries
 impactMetrics:
-  - Deliveries acted on without a valid signature
+  - Deliveries acted on without a valid signature or valid credentials
   - Deliveries lost without being recovered by reconciliation
   - Incidents of a delivery reaching an organization other than the one holding its integration
 tags: [webhooks, integrations, signatures, hmac, replay, idempotency, gateway, secrets]
@@ -21,6 +21,7 @@ industryReferences:
   - {title: "GitHub Docs: Validating webhook deliveries", url: "https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries"}
   - {title: "GitHub Docs: Best practices for using webhooks", url: "https://docs.github.com/en/webhooks/using-webhooks/best-practices-for-using-webhooks"}
   - {title: "Standard Webhooks specification", url: "https://www.standardwebhooks.com/"}
+  - {title: "Postmark: Webhooks overview", url: "https://postmarkapp.com/developer/webhooks/webhooks-overview"}
 ---
 
 # Webhook Receiving Standard
@@ -31,7 +32,7 @@ industryReferences:
 | **Version** | 1.0 |
 | **Status** | Draft |
 | **Author** | Steven Fonseca |
-| **Last Updated** | 2026-11-21 |
+| **Last Updated** | 2026-11-22 |
 
 ## Purpose
 
@@ -44,7 +45,9 @@ services learn of it, how missed deliveries are recovered, and how receiving is 
 ## Value Proposition
 
 - **Only the provider is heard** — every delivery is checked against a secret only the provider
-  and the platform hold, before anything acts on it, so a forged request changes nothing.
+  and the platform hold, by the provider's signature or, for a provider that does not sign, by the
+  credentials it sends and the addresses it sends from, before anything acts on it, so a forged
+  request changes nothing.
 - **One place per provider** — a provider's deliveries arrive at the one service that holds the
   platform's integration with it, so its secret, its signature scheme and its quirks live once.
 - **Other services use the platform's events** — a service that reacts to a provider's activity
@@ -93,26 +96,53 @@ between environments would send one environment's activity to another.
 
 ## 2. Authenticity
 
-### 2.1 Check every delivery's signature before any other work.
+### 2.1 Prove every delivery came from the provider before any other work.
 
-[REQUIRED] The receiving service shall verify the provider's signature over the delivery's raw
-request body, using the provider's documented algorithm and the webhook secret, and compare the
-result in constant time, before parsing the body or acting on any header. *Rationale:* The
-signature is the only proof the delivery came from the provider; parsing first exposes the parser
-to anyone, and comparing in variable time leaks the expected signature byte by byte.
+[REQUIRED] The receiving service shall prove a delivery came from the provider before parsing its
+body or acting on any header, by one of two patterns: the provider's signature (2.2) where the
+provider signs its deliveries, or the provider's credentials and source addresses (2.3) where it
+does not. A provider that signs is always checked by its signature. *Rationale:* Proof of origin is
+what keeps a forged request from changing anything; providers offer one of two means of it, and
+both, applied as written, keep a request from anyone else out.
+
+*Example:* GitHub and Slack sign their deliveries, so their receivers check signatures. Postmark
+does not sign, so its receiver checks the credentials and the source address of each delivery.
+
+### 2.2 Verify a signing provider's signature over the raw body, in constant time.
+
+[REQUIRED] Where the provider signs, the receiving service shall verify the provider's signature
+over the delivery's raw request body, using the provider's documented algorithm and the webhook
+secret, and compare the result in constant time. *Rationale:* The signature binds the body to a
+secret only the provider and the platform hold; checking it after parsing exposes the parser to
+anyone, and comparing in variable time leaks the expected signature byte by byte.
 
 *Example:* GitHub signs each delivery with HMAC-SHA256 of the body under the webhook secret and
 sends it as `X-Hub-Signature-256: sha256=<hex>`; the service computes the same and compares the two
 with a constant-time comparison.
 
-### 2.2 Refuse a delivery whose signature is missing or wrong.
+### 2.3 Check a non-signing provider's credentials, and admit it only from its source addresses.
 
-[REQUIRED] A delivery without a signature, or with one that does not verify, shall be answered 401
-with a problem response that names only the failure, and shall be logged with its source address
-and delivery id. *Rationale:* The provider never sends an unsigned delivery, so one is a forgery
-or a misconfiguration, and either is worth seeing in the logs.
+[REQUIRED] Where the provider does not sign, the platform shall generate credentials for the
+webhook — HTTP basic authentication, or a secret header where the provider supports one —
+configure them in the provider, and the receiving service shall compare the credentials on every
+delivery in constant time. The gateway shall admit the webhook route only from the source addresses
+the provider publishes, kept current from the provider's list. *Rationale:* Without a signature the
+shared credential is the proof of origin, and limiting the route to the provider's addresses means a
+leaked credential cannot be used from anywhere else.
 
-### 2.3 Refuse a delivery outside the replay window when the provider signs a timestamp.
+*Example:* Postmark sends the basic authentication credentials set on its webhook with every
+delivery and publishes the addresses it sends from; the Email Service compares the credentials,
+and the gateway admits the Postmark webhook route only from those addresses.
+
+### 2.4 Refuse a delivery that is not proven.
+
+[REQUIRED] A delivery whose signature or credentials are missing or do not verify shall be answered
+401 with a problem response that names only the failure, and shall be logged with its source
+address and delivery id. A request from outside a non-signing provider's source addresses shall be
+refused at the gateway. *Rationale:* The provider never sends an unproven delivery, so one is a
+forgery or a misconfiguration, and either is worth seeing in the logs.
+
+### 2.5 Refuse a delivery outside the replay window when the provider signs a timestamp.
 
 [REQUIRED] When a provider includes a timestamp in what it signs, the receiving service shall
 refuse a delivery whose timestamp is more than five minutes from the service's clock. *Rationale:*
@@ -120,15 +150,17 @@ A captured delivery replayed later carries a valid signature, and a signed times
 the service tell it from a fresh one.
 
 *Example:* Slack signs `v0:<timestamp>:<body>`, so a Slack delivery stamped six minutes ago is
-refused. GitHub signs no timestamp, so GitHub deliveries rely on 3.2 instead.
+refused. GitHub signs no timestamp, and Postmark signs nothing, so their deliveries rely on 4.2
+instead.
 
-### 2.4 Keep each webhook secret in the secret store, and accept two during a rotation.
+### 2.6 Keep each webhook secret in the secret store, and accept two during a rotation.
 
-[REQUIRED] A webhook secret shall be held in the platform's secret store, in a container the
-environment's infrastructure code creates and the secret's value added to it apart from that
-code, and read by the receiving service at run time. During a rotation the service shall accept a
-signature made with either the current or the previous secret. *Rationale:* The provider issues the
-secret, so infrastructure code reserves its place without holding its value, and accepting both
+[REQUIRED] A webhook secret, whether a signing secret or a non-signing provider's credentials,
+shall be held in the platform's secret store, in a container the environment's infrastructure code
+creates and the secret's value added to it apart from that code, and read by the receiving service
+at run time. During a rotation the service shall accept a signature made with, or credentials
+matching, either the current or the previous secret. *Rationale:* The secret's value is set in the
+provider, so infrastructure code reserves its place without holding its value, and accepting both
 secrets lets the provider switch without a window of refused deliveries.
 
 ## 3. Organization
@@ -202,17 +234,19 @@ days; an hourly job lists the app's failed deliveries and asks GitHub to redeliv
 
 ## 6. Logging and testing
 
-### 6.1 Log each delivery's identity and outcome, and leave out its payload and signature.
+### 6.1 Log each delivery's identity and outcome, and leave out its payload, signature and credentials.
 
 [REQUIRED] The receiving service shall log each delivery's provider, delivery id, event type,
-organization, outcome and processing time, and shall leave the body, the signature and the secret
-out of every log. *Rationale:* The identity and outcome are what tracing a delivery needs; the body
-may carry a customer's code or personal data, and the signature helps a forger.
+organization, outcome and processing time, and shall leave the body, the signature, the
+credentials and the secret out of every log. *Rationale:* The identity and outcome are what tracing
+a delivery needs; the body may carry a customer's code or personal data, and the signature or
+credentials help a forger.
 
-### 6.2 Test signature checks, repeats, ordering and unhandled types.
+### 6.2 Test proof of origin, repeats, ordering and unhandled types.
 
-[REQUIRED] A receiving service's tests shall cover a delivery with a valid signature, a missing
-one, a wrong one and one made with the previous secret during a rotation; the same delivery twice;
+[REQUIRED] A receiving service's tests shall cover a delivery with a valid signature or valid
+credentials, a missing one, a wrong one and one made with the previous secret during a rotation; the
+same delivery twice;
 two deliveries out of order; an event type the service does not handle; and a delivery no
 integration holds. *Rationale:* These are the cases a receiver meets in production and the path
 written first never exercises.
