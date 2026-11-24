@@ -106,7 +106,7 @@ everyone has one effect.
 [REQUIRED] A flag's key shall be the owning service domain's short code, a dot, and the feature in
 lowercase words joined by dashes. *Rationale:* The key says who owns the flag and what it controls
 wherever it appears — in code, in a log line and in the flag system.
-*Example:* `ealand.landscape-export-format`.
+*Example:* `eabus.capability-map-export-format`.
 
 ### 2.2 End a kill switch's key in `.enabled`.
 
@@ -119,7 +119,7 @@ its values: enabled is true, or enabled is false.
 
 [REQUIRED] A boolean flag's key shall describe the behavior that `true` switches on.
 *Rationale:* A flag named for its off state is read backwards by the person changing it.
-*Example:* `ealand.bulk-import` switches bulk import on when true.
+*Example:* `eabus.bulk-import` switches bulk import on when true.
 
 ### 2.4 Use a key once.
 
@@ -212,7 +212,7 @@ expressed as an entitlement. A flag's targeting holds no plan name, tier, price 
 *Rationale:* Plan logic held in targeting rules is a second, unaudited copy of the commercial
 arrangement, and the two disagree the first time a plan changes.
 *Example:* Bulk import is included in the Team plan. The Team plan's grants include the
-`bulk-import` capability, and the release flag `ealand.bulk-import` is on for everyone once the
+`bulk-import` capability, and the release flag `eabus.bulk-import` is on for everyone once the
 rollout ends.
 
 ### 5.3 Let a flag narrow access and never widen it.
@@ -370,7 +370,7 @@ incident by everyone who notices it.
 uses one dependency. A single endpoint has its own flag only when it is the whole capability.
 *Rationale:* A consumer builds on a capability's endpoints together; a capability with some
 endpoints on and others off is a state no consumer was written for.
-*Example:* The flag `ealand.landscape-export.enabled` covers the endpoint that starts an export,
+*Example:* The flag `eabus.capability-map-export.enabled` covers the endpoint that starts an export,
 the one that reports its status and the one that returns the file.
 
 ### 10.2 Answer consistently across a capability's endpoints.
@@ -385,8 +385,8 @@ can recognize that the capability is off and wait.
 ops flag with its own key and a declared type and range, separate from the flag that switches the
 capability on or off. *Rationale:* Switching a capability off and tuning it are different acts by
 different people, and one flag that does both cannot be given a safe default for both.
-*Example:* `ealand.landscape-export.enabled` switches export on and off;
-`ealand.landscape-export-page-size` holds the number of records per file.
+*Example:* `eabus.capability-map-export.enabled` switches export on and off;
+`eabus.capability-map-export-page-size` holds the number of records per file.
 
 ### 10.4 Keep a published contract's behavior the same under every flag value.
 
