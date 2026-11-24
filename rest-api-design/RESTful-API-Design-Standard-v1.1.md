@@ -1021,6 +1021,10 @@ The response is the collection envelope (§15.1) with a groups attribute in plac
 
 [REQUIRED] Use ISO 4217 for currency, ISO 3166-1 alpha-2 for country, and BCP 47 for language tags. *Rationale:* Standard code sets make cross-API and cross-system data directly comparable. *Example:* `"currency": "USD", "country": "US", "language": "en-US"`
 
+### 16.9 Prefix an identifier assigned by an external system with external.
+
+[REQUIRED] An attribute holding an identifier that a system outside the platform assigned shall be named `external<Role>Id`, where the role says what the identifier is to the resource and never names the external system, and shall be a string in the external system's own format, exempt from §16.7. *Rationale:* The prefix tells a reader the value is not a platform identifier and cannot be resolved by any platform API, and naming the role rather than the vendor keeps the attribute's name when the provider changes. *Example:* `"externalProviderMessageId": "b7bc2f4a-e38e-4336-af7d-e6c392c2f817"`, the email provider's id for a message, rather than `providerMessageId` or `postmarkMessageId`
+
 ---
 
 ## 17. Caching & Optimistic Concurrency
