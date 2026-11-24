@@ -141,9 +141,9 @@ A state is a business fact the resource's design already names, and a subscriber
 transition learns of it from the one event, without reading the record back (§3.7).
 
 *Example:* A functional requirements set moves from DRAFT to APPROVED, from APPROVED to
-IN_REVISION and back to APPROVED. The Product Design and Development Service publishes
-`prddes.public.functional-requirements-set.approved.1` on each move into APPROVED and
-`prddes.public.functional-requirements-set.revision-started.1` on each move into IN_REVISION.
+IN_REVISION and back to APPROVED. The Product Definition and Development Service publishes
+`prddef.public.functional-requirements-set.approved.1` on each move into APPROVED and
+`prddef.public.functional-requirements-set.revision-started.1` on each move into IN_REVISION.
 
 ### 1.7 Publish an event from every path that makes its fact true.
 
