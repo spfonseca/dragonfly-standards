@@ -874,7 +874,12 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 14.2 The asynchronous operation pattern: apply it to any work exceeding the synchronous threshold.
 
-[REQUIRED] An asynchronous operation is one whose result is not returned in the initiating response; any operation that cannot reliably complete within the synchronous response threshold — 10 seconds at the 99th percentile — shall be designed as one. All validation and authorization run synchronously in the initiating request — work that will predictably fail is never accepted. *Rationale:* A fixed threshold, set safely below every gateway and client timeout, keeps the sync-versus-async choice deliberate and reviewable; rejecting doomed work up front spares consumers polling toward a guaranteed failure.
+[REQUIRED] An asynchronous operation is one whose result is not returned in the initiating response; any operation that cannot reliably complete within the synchronous response threshold — 10 seconds at the 99th percentile — shall be designed as one. What runs before the response depends on which kind the operation is:
+
+- **Synchronous:** all validation and authorization run before the response; a request that fails any of them is refused.
+- **Asynchronous:** the initiating request runs authentication, the scope check (§13.8) and validation of the request against its schema, and accepts every request that passes them. Checks that depend on other records, other services or state that may change before the work runs — whether a referenced record exists, a fact-based authorization decision, a provider's verdict — run as part of the work, and a failure is recorded on the tracking resource (§14.3) with its reason.
+
+*Rationale:* A fixed threshold, set safely below every gateway and client timeout, keeps the sync-versus-async choice deliberate and reviewable. An asynchronous operation exists because its work cannot be bounded in the request; checks that reach other services share that cost and would bring back the latency, and the dependency on those services' availability, that the pattern removes. Confining the initiating request to the caller's identity, scope and the request's shape keeps acceptance fast and predictable, and the tracking resource already tells the consumer why accepted work did not complete. *Example:* `POST /v1/email-messages` answers 202 for a well-formed message to any `userId`; a user who does not exist is recorded on the message as recipient `FAILED` `USER_NOT_FOUND`.
 
 ### 14.3 Asynchronous operations — initiation: return 202 Accepted and track progress on the resource itself.
 
