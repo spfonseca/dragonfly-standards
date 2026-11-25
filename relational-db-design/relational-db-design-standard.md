@@ -350,11 +350,13 @@ one — there is nothing to leak, and nothing to forget to rotate. *Example:*
 
 ### 11.2 Grant the runtime user DML only.
 
-[REQUIRED] The service grants its runtime user SELECT, INSERT, UPDATE, and DELETE on its own
-database and nothing else; all DDL — including pre-release schema creation — executes as the
-migration user.
+[REQUIRED] In production, the service grants its runtime user SELECT, INSERT, UPDATE, and DELETE
+on its own database and nothing else; all DDL executes as the migration user. Outside production,
+the runtime user may also run DDL, so a non-production environment may build its schema from the
+models at startup (§13.1).
 *Rationale:* A compromised runtime credential can damage data but cannot drop or reshape the
-schema.
+schema. Non-production data is disposable, so the separation buys nothing there that justifies a
+second deploy step.
 
 ### 11.3 Give each service its own database on the shared instance.
 
