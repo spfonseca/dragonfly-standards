@@ -180,13 +180,14 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 
 [REQUIRED] Every resource shall be directly addressable by a stable URL, without prior navigation or session context; URLs are permanent — never recycled or repurposed for a different resource — and instance identifiers shall be unique and conform to UUID (RFC 4122). *Rationale:* Permanent, directly addressable identifiers keep references stable across distributed systems and prevent one resource's identity from silently becoming another's.
 
-### 4.2 Represent all character-based interactions as JSON, with text, model and interchange representations where a resource has a natural form for them.
+### 4.2 Represent all character-based interactions as JSON, with text, model, interchange and image representations where a resource has a natural form for them.
 
 [REQUIRED] All character-based request content, and every response's default representation, shall be JSON (application/json). A resource read may also offer, chosen by Accept (§10.3):
 
 - `text/plain`, `text/markdown` or `text/vnd.mermaid`, where the resource has a natural text form.
 - A diagram's model representation, which every diagram offers (§4.18).
 - A diagram's interchange representation, where its notation's own standard defines an interchange format (§4.20).
+- A diagram's image representations, `image/svg+xml` and `image/png` (§4.21).
 
 *Rationale:* JSON guarantees that every client can interoperate, and the other forms serve consumers that want them without a second resource kept in step. *Example:* `GET /v1/diagrams/{diagramId}` with `Accept: text/vnd.mermaid` returns Mermaid text.
 
@@ -287,6 +288,17 @@ shall observe, §8.11, which reserves the path segment that tells the two apart.
 - A document that holds a construct the diagram type does not hold is refused with a problem that names each such construct.
 
 *Rationale:* A consumer exchanges diagrams with other tools in the format the notation's standard defines, with no converter of its own, and nothing it sends is lost without being told. *Example:* A BPMN Process Diagram read with `Accept: application/xml` returns a BPMN 2.0 XML document that validates against the OMG BPMN 2.0 XML schemas, with its BPMN DI.
+
+### 4.21 Offer a diagram as an image.
+
+[OPTIONAL] A diagram may be offered as a picture of it, in `image/svg+xml` and `image/png`, drawn as the product's own editor draws it. A diagram type that offers one follows these rules:
+
+- The diagram type lists each image media type among its representations.
+- It is offered on the diagram and on each of its past revisions.
+- The picture is drawn from the diagram as the request reads it: its elements, relationships, positions and styles, framed as the editor frames a picture of the whole diagram.
+- A diagram larger than the service draws is refused with a problem that names the limit it exceeds.
+
+*Rationale:* A document, a slide or a web page shows the diagram without a client of its own that draws the notation, and the picture matches what the diagram's editors see. *Example:* `GET /v1/diagrams/{diagramId}` with `Accept: image/png` returns a PNG of the diagram; the same request with `Accept: image/svg+xml` returns an SVG document of it.
 
 ## 5. Resilience
 
@@ -533,7 +545,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 10.3 Use Accept to negotiate the response representation.
 
-[REQUIRED] Request. Accept states the representation the client wants: JSON, a text form (§4.2), a diagram's model representation (§4.18) or its interchange representation (§4.20). The metadata endpoints (§8.9) return JSON or HTML. When Accept is absent, JSON is returned, and an Accept naming only representations the resource does not offer is answered 406 (§12.21). *Rationale:* Standard negotiation lets any client obtain a representation it can process.
+[REQUIRED] Request. Accept states the representation the client wants: JSON, a text form (§4.2), a diagram's model representation (§4.18), its interchange representation (§4.20) or an image of it (§4.21). The metadata endpoints (§8.9) return JSON or HTML. When Accept is absent, JSON is returned, and an Accept naming only representations the resource does not offer is answered 406 (§12.21). *Rationale:* Standard negotiation lets any client obtain a representation it can process.
 
 ### 10.4 Use Accept-Charset to declare UTF-8.
 
@@ -545,7 +557,7 @@ and release notes — and is addressed on the collection rather than an instance
 
 ### 10.6 Use Content-Type to make every payload self-describing.
 
-[REQUIRED] Request and response. Every payload shall declare its representation via a correct Content-Type carrying a standard, IANA-registered media type: application/json for representations, application/problem+json for error bodies (§12.17), JSON or HTML for the metadata endpoints, and an interchange representation's own media type (§4.20). *Rationale:* Self-describing payloads let any client and intermediary interpret content without out-of-band knowledge.
+[REQUIRED] Request and response. Every payload shall declare its representation via a correct Content-Type carrying a standard, IANA-registered media type: application/json for representations, application/problem+json for error bodies (§12.17), JSON or HTML for the metadata endpoints, an interchange representation's own media type (§4.20), and `image/svg+xml` or `image/png` for an image of a diagram (§4.21). *Rationale:* Self-describing payloads let any client and intermediary interpret content without out-of-band knowledge.
 
 ### 10.7 Use Content-Encoding for standard compression.
 
