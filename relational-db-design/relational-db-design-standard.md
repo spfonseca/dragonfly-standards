@@ -259,8 +259,11 @@ index-friendly on the promise that the indexes exist.
 ### 8.1 Map wire camelCase to column snake_case mechanically.
 
 [REQUIRED] Wire field names map to column names by case convention alone — camelCase to
-snake_case with no renames, so the mapping is derivable in both directions. *Rationale:* A
-mechanical mapping needs no lookup table and cannot drift. *Example:* `firstName` ↔ `first_name`
+snake_case with no renames, so the mapping is derivable in both directions. The one exception is a
+wire name that is an SQL reserved word: its column adds a qualifying noun, and the model states the
+mapping. *Rationale:* A mechanical mapping needs no lookup table and cannot drift; a reserved word as
+a column name must be quoted in every statement that touches it, which is the larger hazard.
+*Example:* `firstName` ↔ `first_name`; `from` ↔ `from_address`
 
 ## 9. Resilience
 
